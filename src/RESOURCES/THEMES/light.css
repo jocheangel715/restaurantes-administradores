@@ -1,0 +1,14 @@
+:root {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --container-background: #f5f5f5;
+  --form-background: #ffffff;
+  --input-background: #ffffff;
+  --input-border: #ccc;
+  --button-color: #007bff;
+  --button-hover-color: #0056b3;
+  --button-text-color: #ffffff;
+  --toggle-button-background: #007bff;
+  --toggle-button-color: #ffffff;
+  --toggle-button-hover-background: #0056b3;
+}
