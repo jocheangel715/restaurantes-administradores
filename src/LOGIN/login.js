@@ -22,7 +22,7 @@ const Login = () => {
     try {
       await setPersistence(auth, browserLocalPersistence); // Set persistence to 30 days
       await signInWithEmailAndPassword(auth, email, password); // Sign in with email and password
-      navigate('/restaurantes-administradores/'); // Redirect to homepage after successful login
+      navigate('/restaurantes-administradores'); // Redirect to homepage after successful login
     } catch (err) {
       setError(err.message); // Set error message if login fails
     }

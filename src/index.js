@@ -22,8 +22,8 @@ onAuthStateChanged(auth, (user) => {
             </>
           ) : (
             <>
-              <Route path="/restaurantes-administradores/" element={<Login />} />
-              <Route path="/restaurantes-administradores/" element={<Login />} /> {/* Default route */}
+              <Route path="/restaurantes-administradores" element={<Login />} />
+              <Route path="/restaurantes-administradores" element={<Login />} /> {/* Default route */}
             </>
           )}
         </Routes>
