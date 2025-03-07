@@ -17,13 +17,13 @@ onAuthStateChanged(auth, (user) => {
         <Routes>
           {user ? (
             <>
-              <Route path="/homepage" element={<Homepage />} />
-              <Route path="/" element={<Homepage />} /> {/* Default route */}
+              <Route path="/restaurantes-administradores" element={<Homepage />} />
+              <Route path="/restaurantes-administradores" element={<Homepage />} /> {/* Default route */}
             </>
           ) : (
             <>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Login />} /> {/* Default route */}
+              <Route path="/restaurantes-administradores/" element={<Login />} />
+              <Route path="/restaurantes-administradores/" element={<Login />} /> {/* Default route */}
             </>
           )}
         </Routes>

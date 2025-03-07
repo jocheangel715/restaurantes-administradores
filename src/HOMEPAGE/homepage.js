@@ -10,7 +10,7 @@ const Homepage = () => {
 
     const handleLogout = () => {
       signOut(auth).then(() => {
-        window.location.href = '/'; 
+        window.location.href = 'restaurantes-administradores/'; 
       }).catch((error) => {
         console.error('Error signing out: ', error);
       });
