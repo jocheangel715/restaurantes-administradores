@@ -5,8 +5,8 @@ import './index.css';
 import Login from './LOGIN/login'; // Import Login component
 import Homepage from './HOMEPAGE/homepage'; // Import Homepage component
 import reportWebVitals from './reportWebVitals';
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // Import Firebase auth functions
-import { app, auth } from './firebase'; // Import the initialized Firebase app and auth
+import {  onAuthStateChanged } from "firebase/auth"; // Import Firebase auth functions
+import { auth } from './firebase'; // Import the initialized Firebase app and auth
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

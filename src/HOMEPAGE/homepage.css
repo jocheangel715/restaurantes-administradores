@@ -1,11 +1,105 @@
-.homepage-container {
-  padding: 20px;
+@import '../RESOURCES/THEMES/dark.css';
+
+.classname-homepage-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* Align items at the top */
+  height: 100vh;
+  background-color: var(--background-color);
+  animation: fadeIn 1s ease-in-out;
+  position: relative;
+  padding-top: 10px; /* Reduce padding to move content higher */
+  
+}
+
+.classname-welcome-message {
+  font-size: 2rem;
+  position: absolute;
+  top: 40px; /* Ubicación exacta desde la parte superior */
+  left: 0;
+  right: 0;
+  margin-bottom: 10px;
+  color: var(--text-color);
+  animation: slideIn 1s ease-in-out;
   text-align: center;
 }
 
-button {
-  margin: 10px;
-  padding: 10px 20px;
-  font-size: 16px;
+
+
+.classname-logout-button {
+  padding: 10px;
+  font-size: 4rem;
+  color: var(--button-text-color);
+  background-color: var(--button-color);
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.classname-logout-button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  position: absolute;
+  top: 120px;
+  left: 0;
+  right: 0;
+}
+
+.button-container button {
+  padding: 10px;
+  font-size: 2rem;
+  color: var(--button-text-color);
+  background-color: var(--button-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 150px; /* Set a fixed width for all buttons */
+  height: 100px; /* Set a fixed height for all buttons */
+}
+
+.button-container button span {
+  font-size: 1rem;
+  margin-top: 5px;
+}
+
+.button-container button:hover {
+  background-color: var(--button-hover-color);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

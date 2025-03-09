@@ -1,65 +1,69 @@
-import React, { useState, useEffect } from 'react'; // Import React and hooks
-import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "firebase/auth"; // Import Firebase authentication methods
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
-import './login.css'; // Import CSS for styling
+import React, { useState } from 'react';
+import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { useNavigate } from 'react-router-dom';
+import './login.css';
 
 const Login = () => {
-  const [email, setEmail] = useState(''); // State for email input
-  const [password, setPassword] = useState(''); // State for password input
-  const [error, setError] = useState(''); // State for error messages
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light'); // Load theme from local storage or default to 'light'
-  const navigate = useNavigate(); // Initialize useNavigate for redirection
-  const [dark, setDark] = useState(theme === 'dark'); // State for dark theme based on current theme
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme); // Set the theme attribute on the document element
-    localStorage.setItem('theme', theme); // Save the current theme to local storage
-  }, [theme]); // Run this effect whenever the theme changes
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // State for toggling password visibility
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault(); // Prevent the default form submission behavior
-    const auth = getAuth(); // Get the Firebase auth instance
+    e.preventDefault();
+    const auth = getAuth();
     try {
-      await setPersistence(auth, browserLocalPersistence); // Set persistence to 30 days
-      await signInWithEmailAndPassword(auth, email, password); // Sign in with email and password
-      navigate('/restaurantes-administradores'); // Redirect to homepage after successful login
+      await setPersistence(auth, browserLocalPersistence);
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate('/restaurantes-administradores');
     } catch (err) {
-      setError(err.message); // Set error message if login fails
+      setError(err.message);
     }
   };
 
-  const toggleTheme = () => {
-    const newTheme = dark ? 'light' : 'dark'; // Toggle between light and dark themes
-    setTheme(newTheme); // Update the theme state
-    setDark(!dark); // Update the dark state
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
-    <div className="login-container"> {/* Container for the login form */}
-      <button className={dark ? 'dark' : 'light'} onClick={toggleTheme}> {/* Button to toggle theme */}
-        Switch to {dark ? 'dark' : 'light'} Theme {/* Button text */}
-      </button>
-      <form onSubmit={handleLogin}> {/* Form submission handler */}
-        <h2>Login</h2> {/* Form title */}
-        {error && <p className="error">{error}</p>} {/* Display error message if any */}
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        /> {/* Email input field */}
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        /> {/* Password input field */}
-        <button type="submit">Login</button> {/* Submit button */}
+    <div className="login-container">
+      <form className="login-form" onSubmit={handleLogin}>
+        <h2 className="login-title">Login</h2>
+        {error && <p className="error-message">{error}</p>}
+        <div className="input-group">
+          <label htmlFor="email">Email</label>
+          <input
+            className="login-input"
+            type="email"
+            id="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="input-group">
+          <label htmlFor="password">Password</label>
+          <div className="password-container">
+            <input
+              className="login-input"
+              type={showPassword ? "text" : "password"}
+              id="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <span className="password-toggle-icon" onClick={togglePasswordVisibility}>
+              {showPassword ? '🙈' : '👁️'}
+            </span>
+          </div>
+        </div>
+        <button className="login-button" type="submit">Login</button>
       </form>
     </div>
   );
 };
 
-export default Login; // Export the Login component
+export default Login;

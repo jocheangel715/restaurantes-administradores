@@ -1,0 +1,188 @@
+.inventory-container {
+  padding: 20px;
+}
+
+.inventory-add-button {
+  background-color: var(--button-color);
+  color: var(--button-text-color);
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.inventory-add-button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.inventory-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+}
+
+.inventory-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--container-background);
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 1001;
+  width: 80%;
+  max-width: 500px;
+}
+
+.inventory-modal-content {
+  position: relative;
+}
+
+.inventory-close {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.inventory-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.inventory-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.inventory-label {
+  margin-bottom: 5px;
+  color: var(--text-color);
+}
+
+.inventory-input {
+  padding: 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background: var(--input-background);
+  color: var(--text-color);
+}
+
+.inventory-button {
+  background-color: var(--button-color);
+  color: var(--button-text-color);
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 20px;
+  margin-right: 10px; /* Add margin-right for spacing */
+}
+
+.inventory-button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.inventory-close-button {
+  background-color: var(--button-color);
+  color: var(--button-text-color);
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-left: 10px;
+}
+
+.inventory-close-button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.inventory-list, .orders-list {
+  margin-top: 20px;
+}
+
+.inventory-item, .order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background: var(--input-background);
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+.inventory-item .button-container, .order-item .button-container {
+  display: flex;
+  gap: 5px;
+  margin-left: auto; /* Align buttons to the right */
+}
+
+.inventory-item button, .order-item button {
+  background-color: var(--button-color);
+  color: var(--button-text-color);
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-left: 10px;
+  height: 30px;
+  width: 30px;
+}
+
+.inventory-item button:hover, .order-item button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+}
+
+.confirmation-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--container-background);
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 1001;
+  width: 80%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.confirmation-button {
+  background-color: var(--button-color);
+  color: var(--button-text-color);
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin: 10px;
+}
+
+.confirmation-button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.modal-header {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #ffff;
+}

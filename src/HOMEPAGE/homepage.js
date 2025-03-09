@@ -1,68 +1,132 @@
-import React, { useEffect } from 'react';
-import { getAuth, signOut } from "firebase/auth"; // Import Firebase auth functions
-import { app } from '../firebase'; // Import the initialized Firebase app
-import './homepage.css'; // Import CSS for homepage
+import React, { useEffect, useState } from 'react';
+import { getAuth, signOut } from "firebase/auth";
+import { app } from '../firebase';
+import './homepage.css';
+import { FaSignOutAlt, FaBoxOpen, FaUsers, FaMapMarkerAlt, FaTruck, FaUtensils, FaClipboardList } from 'react-icons/fa';
+import Inventory from '../INVENTARIO/Inventory';
+import Clientes from '../CLIENTES/Clientes';
+import Barrios from '../BARRIOS/Barrios';
+import Proveedores from '../PROVEEDORES/Proveedores';
+import Productos from '../PRODUCTOS/Productos';
+import Pedido from '../PEDIDO/Pedido';
+import VerPedidos from '../VERPEDIDOS/VerPedidos'; // Import VerPedidos component
 
 const Homepage = () => {
+  const [inventoryModalVisible, setInventoryModalVisible] = useState(false);
+  const [clientsModalVisible, setClientsModalVisible] = useState(false);
+  const [barriosModalVisible, setBarriosModalVisible] = useState(false);
+  const [proveedoresModalVisible, setProveedoresModalVisible] = useState(false);
+  const [productosModalVisible, setProductosModalVisible] = useState(false);
+  const [pedidoModalVisible, setPedidoModalVisible] = useState(false);
+
   useEffect(() => {
     const logoutButton = document.getElementById('logout-button');
-    const auth = getAuth(app); // Use the initialized app to get the auth instance
+    const inventoryButton = document.getElementById('inventory-button');
+    const clientsButton = document.getElementById('clients-button');
+    const barriosButton = document.getElementById('barrios-button');
+    const proveedoresButton = document.getElementById('proveedores-button');
+    const productosButton = document.getElementById('productos-button');
+    const pedidoButton = document.getElementById('pedido-button');
+    const auth = getAuth(app);
 
     const handleLogout = () => {
       signOut(auth).then(() => {
-        window.location.href = '/restaurantes-administradores'; 
+        window.location.href = '/restaurantes-administradores';
       }).catch((error) => {
         console.error('Error signing out: ', error);
       });
     };
 
+    const handleInventoryClick = () => {
+      setInventoryModalVisible(true);
+    };
+
+    const handleClientsClick = () => {
+      setClientsModalVisible(true);
+    };
+
+    const handleBarriosClick = () => {
+      setBarriosModalVisible(true);
+    };
+
+    const handleProveedoresClick = () => {
+      setProveedoresModalVisible(true);
+    };
+
+    const handleProductosClick = () => {
+      setProductosModalVisible(true);
+    };
+
+    const handlePedidoClick = () => {
+      setPedidoModalVisible(true);
+    };
+
     logoutButton.addEventListener('click', handleLogout);
+    inventoryButton.addEventListener('click', handleInventoryClick);
+    clientsButton.addEventListener('click', handleClientsClick);
+    barriosButton.addEventListener('click', handleBarriosClick);
+    proveedoresButton.addEventListener('click', handleProveedoresClick);
+    productosButton.addEventListener('click', handleProductosClick);
+    pedidoButton.addEventListener('click', handlePedidoClick);
 
     return () => {
       logoutButton.removeEventListener('click', handleLogout);
+      inventoryButton.removeEventListener('click', handleInventoryClick);
+      clientsButton.removeEventListener('click', handleClientsClick);
+      barriosButton.removeEventListener('click', handleBarriosClick);
+      proveedoresButton.removeEventListener('click', handleProveedoresClick);
+      productosButton.removeEventListener('click', handleProductosClick);
+      pedidoButton.removeEventListener('click', handlePedidoClick);
     };
   }, []);
 
-  // Function to toggle between light and dark themes
-  const toggleTheme = (theme) => {
-    const themeLink = document.getElementById('theme-link');
-    if (themeLink) { // Ensure themeLink exists
-      if (theme === 'dark') {
-        themeLink.href = '../RESOURCES/THEMES/dark.css';
-      } else {
-        themeLink.href = '../RESOURCES/THEMES/light.css';
-      }
-    } else {
-      console.error('Theme link element not found');
-    }
-  };
-
-  useEffect(() => {
-    // Ensure the theme link element exists
-    let themeLink = document.getElementById('theme-link');
-    if (!themeLink) {
-      themeLink = document.createElement('link');
-      themeLink.id = 'theme-link';
-      themeLink.rel = 'stylesheet';
-      document.head.appendChild(themeLink);
-    }
-
-    // Example usage: toggle to dark theme
-    toggleTheme('dark');
-  }, []);
-
-  const handleThemeToggle = () => {
-    const currentTheme = document.getElementById('theme-link').href.includes('dark.css') ? 'dark' : 'light';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    toggleTheme(newTheme);
-  };
+  const closeInventoryModal = () => setInventoryModalVisible(false);
+  const closeClientsModal = () => setClientsModalVisible(false);
+  const closeBarriosModal = () => setBarriosModalVisible(false);
+  const closeProveedoresModal = () => setProveedoresModalVisible(false);
+  const closeProductosModal = () => setProductosModalVisible(false);
+  const closePedidoModal = () => setPedidoModalVisible(false);
 
   return (
-    <div className="homepage-container">
-      <h1>Welcome, Admin</h1>
-      <button id="logout-button">Logout</button>
-      <button onClick={handleThemeToggle}>Toggle Theme</button> {/* Add theme toggle button */}
-    </div>
+    <>
+      <button id="logout-button" className="classname-logout-button">
+        <FaSignOutAlt />
+      </button>
+      <h1 className="classname-welcome-message">Welcome, Admin</h1>
+      {inventoryModalVisible && <Inventory modalVisible={inventoryModalVisible} closeModal={closeInventoryModal} />}
+      {clientsModalVisible && <Clientes modalVisible={clientsModalVisible} closeModal={closeClientsModal} />}
+      {barriosModalVisible && <Barrios modalVisible={barriosModalVisible} closeModal={closeBarriosModal} />}
+      {proveedoresModalVisible && <Proveedores modalVisible={proveedoresModalVisible} closeModal={closeProveedoresModal} />}
+      {productosModalVisible && <Productos modalVisible={productosModalVisible} closeModal={closeProductosModal} />}
+      {pedidoModalVisible && <Pedido modalVisible={pedidoModalVisible} closeModal={closePedidoModal} />}
+      <div className="button-container">
+        <button id="inventory-button" className="classname-inventory-button">
+          <FaBoxOpen />
+          <span>Inventario</span>
+        </button>
+        <button id="clients-button" className="classname-clients-button">
+          <FaUsers />
+          <span>Empleados</span>
+        </button>
+        <button id="barrios-button" className="classname-barrios-button">
+          <FaMapMarkerAlt />
+          <span>Barrios</span>
+        </button>
+        <button id="proveedores-button" className="classname-proveedores-button">
+          <FaTruck />
+          <span>Proveedores</span>
+        </button>
+        <button id="productos-button" className="classname-productos-button">
+          <FaUtensils />
+          <span>Productos</span>
+        </button>
+        <button id="pedido-button" className="classname-pedido-button">
+          <FaClipboardList />
+          <span>Pedido</span>
+        </button>
+      </div>
+      <VerPedidos /> {/* Display VerPedidos component */}
+    </>
   );
 };
 

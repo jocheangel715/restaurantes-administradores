@@ -1,0 +1,274 @@
+{
+    "menu": [
+      {
+        "categoria": "Papas Locas",
+        "productos": [
+          {
+            "nombre": "🥔🔥 Papas Locas",
+            "precio": 27000,
+            "ingredientes": ["Carne", "Pechuga", "Salchicha", "Chorizo", "Maíz tierno", "Tocineta", "Cebolla grille", "Queso gratinado", "Papas rizadas", "Salsas al gusto"]
+          },
+          {
+            "nombre": "🥔✨ Papas Locas Especiales",
+            "precio": 38000,
+            "ingredientes": ["Carne", "Pechuga", "Salchicha", "Chorizo", "6 Alas", "Maíz tierno", "Tocineta", "Cebolla grille", "Queso gratinado", "Papas rizadas", "Salsas al gusto"]
+          }
+        ]
+      },
+      {
+        "categoria": "Patacones",
+        "productos": [
+          {
+            "nombre": "🍌🌽 Mixto",
+            "precio": 17000,
+            "ingredientes": ["Carne", "Pechuga", "Salchicha", "Chorizo", "6 Alas", "Maíz tierno", "Tocineta", "Cebolla grille", "Queso gratinado", "Papas rizadas", "Salsas al gusto"]
+          },
+          {
+            "nombre": "🍌🥩 Solo Carne",
+            "precio": 17000,
+            "ingredientes": ["Carne", "Cebolla grille", "Salchicha americana", "Maíz", "Queso gratinado", "Piña", "Salsas al gusto"]
+          },
+          {
+            "nombre": "🍌🍗 Solo Pollo",
+            "precio": 15000,
+            "ingredientes": ["Pollo", "Cebolla grille", "Salchicha americana", "Maíz", "Queso gratinado", "Piña", "Salsas al gusto"]
+          }
+        ]
+      },
+      {
+        "categoria": "Choripapas",
+        "productos": [
+          {
+            "nombre": "🌭🍟 Choripapa",
+            "precio": 13000,
+            "ingredientes": ["Chorizo", "Papas fritas", "Salsas básicas"]
+          },
+          {
+            "nombre": "🌭✨ Choripapa Especial",
+            "precio": 19000,
+            "ingredientes": ["Chorizo premium", "Papas rizadas", "Toppings especiales", "Salsas gourmet"]
+          }
+        ]
+      },
+      {
+        "categoria": "Salchipapas",
+        "productos": [
+          {
+            "nombre": "🌭🍟 Salchipapa",
+            "precio": 13000,
+            "ingredientes": ["Salchicha americana", "Queso rallado", "Papas fosforito", "Papas rizadas", "Salsas al gusto"]
+          },
+          {
+            "nombre": "🌭🍗 Salchi Especial",
+            "precio": 19000,
+            "ingredientes": ["Salchicha americana", "Pollo desmechado", "Maíz", "Queso gratinado", "Papas rizadas", "Salsas al gusto"]
+          }
+        ]
+      },
+      {
+        "categoria": "Desgranados",
+        "productos": [
+          {
+            "nombre": "🥩🍗 Mixto",
+            "precio": 19000,
+            "ingredientes": ["Carne", "Pollo", "Chorizo", "Queso gratinado", "Salsas al gusto"]
+          },
+          {
+            "nombre": "🥩🔥 Solo Carne",
+            "precio": 18000,
+            "ingredientes": ["Carne", "Chorizo", "Queso gratinado", "Salsas al gusto"]
+          },
+          {
+            "nombre": "🍗🌿 Solo Pollo",
+            "precio": 18000,
+            "ingredientes": ["Pollo", "Chorizo", "Queso gratinado", "Salsas al gusto"]
+          }
+        ]
+      },
+      {
+        "categoria": "Especiales",
+        "productos": [
+          {
+            "nombre": "🧀🌽 Arepa Rellena de Queso",
+            "precio": 9000,
+            "ingredientes": ["Queso", "Cebolla picada", "Papas fosforito", "Maíz", "Piña", "Salsas al gusto"]
+          },
+          {
+            "nombre": "🍔🌽 Arepa Hamburguesa",
+            "precio": 13000,
+            "ingredientes": ["Arepa", "Carne de hamburguesa", "Queso", "Jamón", "Vegetales", "Salsas al gusto"]
+          },
+          {
+            "nombre": "🥩🔥 Carne al Carbón",
+            "precio": 21000,
+            "ingredientes": ["Carne 300g", "Ensalada (tomate/cebolla)", "Papas rizadas", "Salsas al gusto"]
+          },
+          {
+            "nombre": "🍗🧀 Pechuga Gratinada",
+            "precio": 23000,
+            "ingredientes": ["Pechuga 400g", "Ensalada (tomate/cebolla)", "Papas rizadas"]
+          },
+          {
+            "nombre": "🍗🔥 Pechuga al Carbón",
+            "precio": 20000,
+            "ingredientes": ["Pechuga 400g", "Queso gratinado", "Jamón", "Ensalada", "Papas rizadas", "Salsas"]
+          },
+          {
+            "nombre": "🍗🍯 Alitas BBQ",
+            "precio": 18000,
+            "ingredientes": ["12 Alas", "Papas rizadas", "Queso rallado", "Salsas"]
+          },
+          {
+            "nombre": "🍗🌶️ Alitas BBQ Picantes",
+            "precio": 18000,
+            "ingredientes": ["12 Alas picantes", "Papas rizadas", "Queso rallado", "Salsas"]
+          }
+        ]
+      },
+      {
+        "categoria": "Promociones",
+        "productos": [
+          {
+            "nombre": "🌭🌭📦 2 Perros + Papas + Econolitro",
+            "precio": 29000,
+            "ingredientes": ["2 Hot dogs", "Papas fritas", "Bebida 1L"]
+          },
+          {
+            "nombre": "🍔🍔📦 2 Hamburguesas + Econolitro",
+            "precio": 30000,
+            "ingredientes": ["2 Hamburguesas sencillas", "Bebida 1L"]
+          },
+          {
+            "nombre": "🌽🌽📦 2 Arepas + Econolitro",
+            "precio": 31000,
+            "ingredientes": ["2 Arepas rellenas", "Bebida 1L"]
+          }
+        ]
+      },
+      {
+        "categoria": "Hamburguesas",
+        "productos": [
+          {
+            "nombre": "🍔 Sencilla",
+            "precio": 14000,
+            "ingredientes": ["Carne 130g", "Jamón", "Doble queso", "Lechuga", "Tomate", "Cebolla", "Papas rizadas"]
+          },
+          {
+            "nombre": "🍔🥩🍗 Mixta",
+            "precio": 17000,
+            "ingredientes": ["Carne 130g", "Pollo desmechado", "Jamón", "Doble queso", "Lechuga", "Tomate", "Cebolla", "Papas rizadas"]
+          },
+          {
+            "nombre": "🍔🔥 Mixta Filete al Carbón",
+            "precio": 19000,
+            "ingredientes": ["Carne 130g", "Filete de pollo", "Jamón", "Doble queso", "Lechuga", "Tomate", "Cebolla", "Papas rizadas"]
+          },
+          {
+            "nombre": "🍔🍗 Mixta Filete Apanada",
+            "precio": 19000,
+            "ingredientes": ["Carne 130g", "Filete apanado de pollo", "Jamón", "Doble queso", "Lechuga", "Tomate", "Cebolla", "Papas rizadas"]
+          },
+          {
+            "nombre": "🍔🌾 Ranchera",
+            "precio": 19000,
+            "ingredientes": ["Carne 130g", "Pollo desmechado", "Chorizo", "Salsa ranchera", "Lechuga", "Tomate", "Cebolla", "Papas rizadas"]
+          },
+          {
+            "nombre": "🍔🍔 Doble Carne",
+            "precio": 19000,
+            "ingredientes": ["Doble carne", "Doble queso", "Jamón", "Lechuga", "Tomate", "Cebolla", "Papas rizadas"]
+          },
+          {
+            "nombre": "🍔✨ Super Especial",
+            "precio": 21000,
+            "ingredientes": ["Carne 130g", "Pollo desmechado", "Jamón", "Doble queso", "Tocineta", "Lechuga", "Tomate", "Aros de cebolla", "Papas rizadas"]
+          },
+          {
+            "nombre": "👑🍔 La Reina",
+            "precio": 22000,
+            "ingredientes": ["Doble carne", "Jamón", "Doble queso", "Tocineta", "Aros de cebolla", "Lechuga", "Tomate", "Vegetales", "Papas rizadas"]
+          }
+        ]
+      },
+      {
+        "categoria": "Perros",
+        "productos": [
+          {
+            "nombre": "🌭🧀 Barra Libre",
+            "precio": 9000,
+            "ingredientes": ["Salchicha", "Cebolla", "Queso gratinado", "Piña", "Maíz", "Papitas fosforito", "Salsas"]
+          },
+          {
+            "nombre": "🌭🍟 Barra Libre con Papa",
+            "precio": 13000,
+            "ingredientes": ["Salchicha", "Cebolla", "Queso gratinado", "Piña", "Maíz", "Papitas fosforito", "Papas rizadas", "Salsas"]
+          },
+          {
+            "nombre": "🇺🇸🌭 Americano",
+            "precio": 13000,
+            "ingredientes": ["Salchicha americana", "Pollo desmechado", "Cebolla grille", "Queso gratinado", "Papitas fosforito", "Salsas"]
+          },
+          {
+            "nombre": "🌭✨ Especial",
+            "precio": 17000,
+            "ingredientes": ["Carne", "Pechuga", "Chorizo", "Maíz", "Cebolla grille", "Queso gratinado", "Papitas fosforito", "Salsas"]
+          },
+          {
+            "nombre": "🌭🌶️ Choriperro",
+            "precio": 14000,
+            "ingredientes": ["Chorizo ranchero", "Cebolla", "Queso gratinado", "Piña", "Maíz"]
+          }
+        ]
+      },
+      {
+        "categoria": "Adicionales",
+        "productos": [
+          {
+            "nombre": "🧀 Queso",
+            "precio": 3000,
+            "ingredientes": ["Queso adicional"]
+          },
+          {
+            "nombre": "🌭 Chorizo",
+            "precio": 3000,
+            "ingredientes": ["Chorizo extra"]
+          },
+          {
+            "nombre": "🥓 Tocineta",
+            "precio": 3000,
+            "ingredientes": ["Tocineta extra"]
+          },
+          {
+            "nombre": "🌭 Salchicha Americana",
+            "precio": 3000,
+            "ingredientes": ["Salchicha adicional"]
+          },
+          {
+            "nombre": "🧅 Aros de Cebolla",
+            "precio": 3000,
+            "ingredientes": ["Aros de cebolla fritos"]
+          },
+          {
+            "nombre": "🥩 Carne de Hamburguesa",
+            "precio": 5000,
+            "ingredientes": ["Porción extra de carne"]
+          },
+          {
+            "nombre": "🍗 Pollo Desmechado",
+            "precio": 5000,
+            "ingredientes": ["Porción de pollo desmenuzado"]
+          },
+          {
+            "nombre": "🍟 Porción de Papas",
+            "precio": 5000,
+            "ingredientes": ["Papas fritas adicionales"]
+          },
+          {
+            "nombre": "🥫 Tarro de Salsa",
+            "precio": 5000,
+            "ingredientes": ["Salsa extra en tarro"]
+          }
+        ]
+      }
+    ]
+  }
