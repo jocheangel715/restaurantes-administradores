@@ -4,41 +4,34 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Align items at the top */
+  justify-content: flex-start;
   height: 100vh;
   background-color: var(--background-color);
   animation: fadeIn 1s ease-in-out;
   position: relative;
-  padding-top: 10px; /* Reduce padding to move content higher */
-  
+  padding-top: 20px;
 }
 
 .classname-welcome-message {
   font-size: 2rem;
-  position: absolute;
-  top: 40px; /* Ubicación exacta desde la parte superior */
-  left: 0;
-  right: 0;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   color: var(--text-color);
   animation: slideIn 1s ease-in-out;
   text-align: center;
 }
 
-
-
 .classname-logout-button {
   padding: 10px;
-  font-size: 4rem;
+  font-size: 2rem;
   color: var(--button-text-color);
   background-color: var(--button-color);
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 15px;
+  left: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,42 +39,39 @@
 
 .classname-logout-button:hover {
   background-color: var(--button-hover-color);
+  transform: scale(1.05);
 }
 
-.button-container {
+.buttons-container {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
-  position: absolute;
-  top: 120px;
-  left: 0;
-  right: 0;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  max-width: 800px;
 }
 
-.button-container button {
-  padding: 10px;
-  font-size: 2rem;
+.buttons-container button {
+  padding: 12px;
+  font-size: 1.3rem;
   color: var(--button-text-color);
   background-color: var(--button-color);
   border: none;
-  border-radius: 5px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 150px; /* Set a fixed width for all buttons */
-  height: 100px; /* Set a fixed height for all buttons */
+  justify-content: center;
+  width: 180px;
+  height: 80px;
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.button-container button span {
-  font-size: 1rem;
-  margin-top: 5px;
-}
-
-.button-container button:hover {
+.buttons-container button:hover {
   background-color: var(--button-hover-color);
+  transform: scale(1.07);
 }
 
 @keyframes fadeIn {
@@ -102,4 +92,20 @@
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 25px;
+}
+
+.welcome-container {
+  margin-bottom: 25px;
+}
+
+.verpedidos-container-wrapper {
+  margin-top: 25px;
 }

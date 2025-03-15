@@ -92,40 +92,46 @@ const Homepage = () => {
       <button id="logout-button" className="classname-logout-button">
         <FaSignOutAlt />
       </button>
-      <h1 className="classname-welcome-message">Welcome, Admin</h1>
-      {inventoryModalVisible && <Inventory modalVisible={inventoryModalVisible} closeModal={closeInventoryModal} />}
-      {clientsModalVisible && <Clientes modalVisible={clientsModalVisible} closeModal={closeClientsModal} />}
-      {barriosModalVisible && <Barrios modalVisible={barriosModalVisible} closeModal={closeBarriosModal} />}
-      {proveedoresModalVisible && <Proveedores modalVisible={proveedoresModalVisible} closeModal={closeProveedoresModal} />}
-      {productosModalVisible && <Productos modalVisible={productosModalVisible} closeModal={closeProductosModal} />}
-      {pedidoModalVisible && <Pedido modalVisible={pedidoModalVisible} closeModal={closePedidoModal} />}
-      <div className="button-container">
-        <button id="inventory-button" className="classname-inventory-button">
-          <FaBoxOpen />
-          <span>Inventario</span>
-        </button>
-        <button id="clients-button" className="classname-clients-button">
-          <FaUsers />
-          <span>Empleados</span>
-        </button>
-        <button id="barrios-button" className="classname-barrios-button">
-          <FaMapMarkerAlt />
-          <span>Barrios</span>
-        </button>
-        <button id="proveedores-button" className="classname-proveedores-button">
-          <FaTruck />
-          <span>Proveedores</span>
-        </button>
-        <button id="productos-button" className="classname-productos-button">
-          <FaUtensils />
-          <span>Productos</span>
-        </button>
-        <button id="pedido-button" className="classname-pedido-button">
-          <FaClipboardList />
-          <span>Pedido</span>
-        </button>
+      <div className="dashboard">
+        <div className="welcome-container">
+          <h1 className="classname-welcome-message">Welcome, Admin</h1>
+        </div>
+        {inventoryModalVisible && <Inventory modalVisible={inventoryModalVisible} closeModal={closeInventoryModal} />}
+        {clientsModalVisible && <Clientes modalVisible={clientsModalVisible} closeModal={closeClientsModal} />}
+        {barriosModalVisible && <Barrios modalVisible={barriosModalVisible} closeModal={closeBarriosModal} />}
+        {proveedoresModalVisible && <Proveedores modalVisible={proveedoresModalVisible} closeModal={closeProveedoresModal} />}
+        {productosModalVisible && <Productos modalVisible={productosModalVisible} closeModal={closeProductosModal} />}
+        {pedidoModalVisible && <Pedido modalVisible={pedidoModalVisible} closeModal={closePedidoModal} />}
+        <div className="buttons-container">
+          <button id="inventory-button" className="classname-inventory-button">
+            <FaBoxOpen />
+            <span>Inventario</span>
+          </button>
+          <button id="clients-button" className="classname-clients-button">
+            <FaUsers />
+            <span>Empleados</span>
+          </button>
+          <button id="barrios-button" className="classname-barrios-button">
+            <FaMapMarkerAlt />
+            <span>Barrios</span>
+          </button>
+          <button id="proveedores-button" className="classname-proveedores-button">
+            <FaTruck />
+            <span>Proveedores</span>
+          </button>
+          <button id="productos-button" className="classname-productos-button">
+            <FaUtensils />
+            <span>Productos</span>
+          </button>
+          <button id="pedido-button" className="classname-pedido-button">
+            <FaClipboardList />
+            <span>Pedido</span>
+          </button>
+        </div>
+        <div className="verpedidos-container-wrapper">
+          <VerPedidos /> {/* Display VerPedidos component */}
+        </div>
       </div>
-      <VerPedidos /> {/* Display VerPedidos component */}
     </>
   );
 };

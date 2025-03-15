@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { doc, updateDoc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where, setDoc } from 'firebase/firestore';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Detalles.css';
@@ -30,16 +30,43 @@ const Detalles = ({ order, closeModal }) => {
     }
   };
 
-  const handleLlamadoEnCocina = async () => {
+  const updateOrderStatus = async (status, domiciliario = null) => {
     try {
-      const orderDoc = doc(db, 'PEDIDOS', order.id);
+      const now = new Date();
+      const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+      const docId = date;
+
+      const orderDoc = doc(db, 'PEDIDOS', docId);
       const orderSnapshot = await getDoc(orderDoc);
+
       if (orderSnapshot.exists()) {
-        await updateDoc(orderDoc, { status: 'ENCOCINA' });
-        toast.success('Pedido enviado a cocina');
-        closeModal();
+        const data = orderSnapshot.data();
+        const periods = ['MORNING', 'NIGHT'];
+        let orderFound = false;
+
+        for (const period of periods) {
+          if (data[period] && data[period][order.id]) {
+            data[period][order.id].status = status;
+            if (domiciliario) {
+              data[period][order.id].domiciliario = domiciliario;
+            }
+            await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
+            orderFound = true;
+            break;
+          }
+        }
+
+        if (orderFound) {
+          if (domiciliario) {
+            await saveDomicilioOrder(date, domiciliario, order);
+          }
+          toast.success(`Pedido actualizado a ${status}`);
+          closeModal();
+        } else {
+          toast.error('Pedido no encontrado');
+        }
       } else {
-        toast.error('Pedido no encontrado');
+        toast.error('Documento de pedidos no encontrado');
       }
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -47,21 +74,45 @@ const Detalles = ({ order, closeModal }) => {
     }
   };
 
-  const handleEnDomicilio = async () => {
+  const saveDomicilioOrder = async (date, domiciliario, order) => {
     try {
-      const orderDoc = doc(db, 'PEDIDOS', order.id);
-      const orderSnapshot = await getDoc(orderDoc);
-      if (orderSnapshot.exists()) {
-        await updateDoc(orderDoc, { status: 'ENDOMICILIO', domiciliario: selectedDomiciliario });
-        toast.success('Pedido asignado a domiciliario');
-        closeModal();
-      } else {
-        toast.error('Pedido no encontrado');
+      const now = new Date();
+      const period = now.getHours() < 17 ? 'MORNING' : 'NIGHT';
+      const domicilioDoc = doc(db, 'DOMICILIOS', date);
+      const domicilioSnapshot = await getDoc(domicilioDoc);
+
+      let domicilioData = {};
+      if (domicilioSnapshot.exists()) {
+        domicilioData = domicilioSnapshot.data();
       }
+
+      if (!domicilioData[domiciliario]) {
+        domicilioData[domiciliario] = {};
+      }
+
+      if (!domicilioData[domiciliario][period]) {
+        domicilioData[domiciliario][period] = {};
+      }
+
+      domicilioData[domiciliario][period][order.id] = {
+        ...order,
+        domiciliario,
+        status: 'ENDOMICILIO'
+      };
+
+      await setDoc(domicilioDoc, domicilioData, { merge: true });
     } catch (error) {
-      console.error('Error updating order status:', error);
-      toast.error('Error al actualizar el estado del pedido');
+      console.error('Error saving domicilio order:', error);
+      toast.error('Error al guardar el pedido en domicilio');
     }
+  };
+
+  const handleLlamadoEnCocina = () => {
+    updateOrderStatus('ENCOCINA');
+  };
+
+  const handleEnDomicilio = () => {
+    updateOrderStatus('ENDOMICILIO', selectedDomiciliario);
   };
 
   return (

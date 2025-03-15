@@ -3,7 +3,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Pedido.css';
 import { db } from '../firebase';
-import { doc, setDoc, collection, getDocs, query, where, orderBy, limit, deleteDoc, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, query, where, orderBy, limit, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
 import ConfirmationDelete from '../RESOURCES/THEMES/CONFIRMATIONDELETE/ConfirmationDelete';
 import { FaEdit, FaTrash, FaSave, FaArrowLeft, FaCartPlus, FaCopy } from 'react-icons/fa'; // Import icons
 
@@ -198,7 +198,21 @@ const Pedido = ({ modalVisible, closeModal }) => {
           total: total,
           timestamp: Timestamp.now()
         };
-        await addDoc(collection(db, "PEDIDOS"), orderData);
+
+        const now = new Date();
+        const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+        const period = now.getHours() < 17 ? 'MORNING' : 'NIGHT';
+        const docId = date;
+
+        // Generate a unique ID for the order map field
+        const uniqueOrderId = `${newOrderId}_${Date.now()}`;
+
+        await setDoc(doc(db, "PEDIDOS", docId), {
+          [period]: {
+            [uniqueOrderId]: orderData
+          }
+        }, { merge: true });
+
         toast.success("Pedido registrado correctamente");
       } else {
         // Handle proveedor order logic here
@@ -221,12 +235,22 @@ const Pedido = ({ modalVisible, closeModal }) => {
   };
 
   const generateNewOrderId = async () => {
-    const q = query(collection(db, 'PEDIDOS'), orderBy('idPedido', 'desc'), limit(1));
-    const querySnapshot = await getDocs(q);
+    const now = new Date();
+    const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    const docId = date;
+
+    const docRef = doc(db, 'PEDIDOS', docId);
+    const docSnap = await getDoc(docRef);
+
     let lastId = 0;
-    querySnapshot.forEach((doc) => {
-      lastId = parseInt(doc.data().idPedido, 10);
-    });
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const period = now.getHours() < 17 ? 'MORNING' : 'NIGHT';
+      const orders = data[period] ? Object.keys(data[period]) : [];
+      if (orders.length > 0) {
+        lastId = Math.max(...orders.map(orderId => parseInt(orderId.split('_')[0], 10)));
+      }
+    }
     return (lastId + 1).toString().padStart(8, '0');
   };
 
@@ -410,7 +434,12 @@ const handleBillAmountChange = (e) => {
               
               <div className="user-type-selection">
                 <button onClick={() => handleUserTypeChange('cliente')}>Cliente</button>
-                <button onClick={() => handleUserTypeChange('proveedor')}>Proveedor</button>
+                <button 
+  className="hidden" 
+  onClick={() => handleUserTypeChange('proveedor')}
+>
+  Proveedor
+</button>
               </div>
   
               {userType === 'cliente' && (
