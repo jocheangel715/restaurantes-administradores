@@ -41,6 +41,7 @@ const Detalles = ({ order, closeModal }) => {
 
       if (orderSnapshot.exists()) {
         const data = orderSnapshot.data();
+        console.log('Order data:', data); // Log order data
         const periods = ['MORNING', 'NIGHT'];
         let orderFound = false;
 
@@ -97,8 +98,12 @@ const Detalles = ({ order, closeModal }) => {
       domicilioData[domiciliario][period][order.id] = {
         ...order,
         domiciliario,
-        status: 'ENDOMICILIO'
+        status: 'ENDOMICILIO',
+        id: order.idPedido, // Ensure id matches the idPedido field in PEDIDOS
+        idPedido: order.idPedido // Ensure idPedido matches the idPedido field in PEDIDOS
       };
+
+      console.log('Domicilio data:', domicilioData); // Log domicilio data
 
       await setDoc(domicilioDoc, domicilioData, { merge: true });
     } catch (error) {

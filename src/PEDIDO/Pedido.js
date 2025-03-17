@@ -220,7 +220,9 @@ const Pedido = ({ modalVisible, closeModal }) => {
       handleBack();
     } catch (error) {
       console.error("Error al registrar:", error);
-      toast.error("Error al registrar");
+      if (toast) {
+        toast.error("Error al registrar");
+      }
     }
   };
 
