@@ -23,6 +23,8 @@
   z-index: 1001;
   width: 80%;
   max-width: 500px;
+  max-height: 80%; /* Add this line */
+  overflow-y: auto; /* Add this line */
 }
 
 .clients-modal-content {

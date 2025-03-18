@@ -15,7 +15,7 @@ const formatPrice = (value) => {
 };
 
 const Clientes = ({ modalVisible, closeModal }) => {
-  const [client, setClient] = useState({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', barrio: '', deliveryPrice: '', salary: '', scheduleStart: '', scheduleEnd: '' });
+  const [client, setClient] = useState({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', barrio: '', deliveryPrice: '', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
   const [clients, setClients] = useState([]);
   const [barrios, setBarrios] = useState([]); // State for barrios
   const [isAdding, setIsAdding] = useState(false);
@@ -84,15 +84,15 @@ const Clientes = ({ modalVisible, closeModal }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { role, name, phone, address, barrio, deliveryPrice, salary, scheduleStart, scheduleEnd } = client;
+    const { role, name, phone, address, barrio, deliveryPrice, salary, scheduleStart, scheduleEnd, email } = client;
 
     if (role === 'CLIENTE') {
-      if (!name || !phone || !address || !barrio) {
+      if (!name || !phone || !address || !barrio || !email) {
         toast.error("Por favor complete todos los campos obligatorios para el cliente.");
         return;
       }
     } else {
-      if (!name || !phone || !salary || !scheduleStart || !scheduleEnd) {
+      if (!name || !phone || !salary || !scheduleStart || !scheduleEnd || !email) {
         toast.error("Por favor complete todos los campos obligatorios para el rol seleccionado.");
         return;
       }
@@ -102,7 +102,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
       const { phoneCountryCode, ...clientData } = client;
       const formattedClient = {
         ...clientData,
-        phone: `${client.phoneCountryCode}${client.phone}`,
+        phone: `${client.phoneCountryCode}${client.phone.replace(client.phoneCountryCode, '')}`,
         salary: client.salary.replace(/[^0-9.]/g, ''),
         schedule: `${client.scheduleStart}-${client.scheduleEnd}`
       };
@@ -150,13 +150,13 @@ const Clientes = ({ modalVisible, closeModal }) => {
 
   const handleBack = () => {
     setIsAdding(false);
-    setClient({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', barrio: '', deliveryPrice: '', salary: '', scheduleStart: '', scheduleEnd: '' });
+    setClient({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', barrio: '', deliveryPrice: '', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
   };
 
   const handleAdd = () => {
     fetchLastClientId();
     setIsAdding(true);
-    setClient({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', barrio: '', deliveryPrice: '', salary: '', scheduleStart: '', scheduleEnd: '' });
+    setClient({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', barrio: '', deliveryPrice: '', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
   };
 
   const handleCloseModal = () => {
@@ -211,6 +211,17 @@ const Clientes = ({ modalVisible, closeModal }) => {
                       />
                     </div>
                     <div className="clients-form-group">
+                      <label className="clients-label">Email:</label>
+                      <input
+                        className="clients-input"
+                        type="email"
+                        name="email"
+                        value={client.email}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="clients-form-group">
                       <label className="clients-label">Rol:</label>
                       <select
                         className="clients-input"
@@ -245,7 +256,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
                           className="clients-input phone-number"
                           type="text"
                           name="phone"
-                          value={client.phone}
+                          value={client.phone.replace(client.phoneCountryCode, '')}
                           onChange={handleInputChange}
                           required
                         />

@@ -23,6 +23,8 @@
   z-index: 1001;
   width: 80%;
   max-width: 500px;
+  max-height: 80%;
+  overflow-y: auto;
 }
 
 .barrios-modal-content {

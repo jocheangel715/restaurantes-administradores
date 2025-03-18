@@ -58,7 +58,12 @@ const Barrios = ({ modalVisible, closeModal }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setBarrio({ ...barrio, [name]: value });
+    if (name === 'deliveryPrice') {
+      const formattedValue = value === '' || isNaN(parseFloat(value.replace(/[^0-9.]/g, ''))) ? '0' : value;
+      setBarrio({ ...barrio, [name]: formattedValue });
+    } else {
+      setBarrio({ ...barrio, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -66,6 +71,7 @@ const Barrios = ({ modalVisible, closeModal }) => {
     try {
       const formattedBarrio = {
         ...barrio,
+        name: barrio.name.toUpperCase(), // Convert name to uppercase
         deliveryPrice: barrio.deliveryPrice.replace(/[^0-9.]/g, ''),
       };
       await setDoc(doc(db, "BARRIOS", barrio.id), formattedBarrio);

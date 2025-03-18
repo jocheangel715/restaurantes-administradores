@@ -1,5 +1,8 @@
 .productos-container {
   padding: 20px;
+  font-family: 'Arial', sans-serif; /* Ensure a clear font */
+  -webkit-font-smoothing: antialiased; /* Improve font rendering */
+  -moz-osx-font-smoothing: grayscale; /* Improve font rendering */
 }
 
 .productos-overlay {
@@ -29,6 +32,41 @@
 
 .productos-modal-content {
   position: relative;
+  font-family: 'Arial', sans-serif; /* Ensure a clear font */
+  -webkit-font-smoothing: antialiased; /* Improve font rendering */
+  -moz-osx-font-smoothing: grayscale; /* Improve font rendering */
+}
+
+.edit-productos-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1002;
+}
+
+.edit-productos-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--container-background);
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 1003;
+  width: 80%;
+  max-width: 500px;
+  max-height: 80vh; /* Add max-height */
+  overflow-y: auto; /* Add vertical scrollbar */
+}
+
+.edit-productos-modal-content {
+  position: relative;
+  font-family: 'Arial', sans-serif; /* Ensure a clear font */
+  -webkit-font-smoothing: antialiased; /* Improve font rendering */
+  -moz-osx-font-smoothing: grayscale; /* Improve font rendering */
 }
 
 .productos-close {
@@ -115,6 +153,10 @@
   background: var(--input-background);
   color: var(--text-color);
   margin-bottom: 10px;
+}
+
+.productos-item.disable {
+  background: rgba(255, 0, 0, 0.344);
 }
 
 .productos-item .button-container {

@@ -57,6 +57,12 @@
 .verpedidos-order-item.en-cocina {
   background: linear-gradient(135deg, #ffeb3b, #ffc107); /* Amarillo */
 }
+/* Estilo para EMPACADO */
+.verpedidos-order-item.EMPACADO {
+  background: linear-gradient(135deg, #2196F3, #0D47A1); /* Azul */
+}
+
+
 
 /* Estilo para DOMICILIO */
 .verpedidos-order-item.domicilio {
@@ -154,4 +160,22 @@
   word-wrap: break-word;  /* Rompe palabras largas */
   overflow-wrap: break-word; /* Alternativa para navegadores modernos */
   white-space: normal; /* Permite saltos de línea */
+}
+
+.period-select-dropdown {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #6a11cb;
+  border-radius: 5px;
+  margin-top: 10px;
+  font-size: 16px;
+  color: #ffffff;
+  background-color: #121212;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.period-select-dropdown:focus {
+  border-color: #2575fc;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  outline: none;
 }

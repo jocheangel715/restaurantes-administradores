@@ -216,88 +216,104 @@ const Productos = ({ modalVisible, closeModal }) => {
             <div className="productos-modal-content">
               <span className="productos-close" onClick={handleCloseModal}>&times;</span>
               <h2 className="modal-header">Administrar Productos</h2>
-              {isAdding ? (
-                <>
-                  <form className="productos-form" onSubmit={handleSubmit}>
-                    <div className="productos-form-group">
-                      <label className="productos-label">ID:</label>
-                      <input
-                        className="productos-input"
-                        type="text"
-                        name="id"
-                        value={producto.id}
-                        onChange={handleInputChange}
-                        readOnly
-                      />
+              <button className="productos-button" onClick={handleAdd}>Agregar</button>
+              <input className="hidden" type="file" accept=".json" onChange={handleFileUpload} />
+              <select className="category-select" value={selectedCategory} onChange={handleCategoryChange}>
+                {categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+              <div className="productos-list">
+                {filteredProductos.map((item) => (
+                  <div key={item.id} className={`productos-item ${item.status === 'DISABLE' ? 'disable' : ''}`}>
+                    <span>{item.name} - {formatPrice(item.price)}</span>
+                    <div className="button-container">
+                      <button onClick={() => handleEdit(item)}><FaEdit /></button>
+                      <button onClick={() => handleDelete(item.id)}><FaTrash /></button>
                     </div>
-                    <div className="productos-form-group">
-                      <label className="productos-label">Categoría:</label>
-                      <select
-                        className="productos-input"
-                        name="category"
-                        value={producto.category}
-                        onChange={handleInputChange}
-                      >
-                        {categoryOptions.map((option) => (
-                          <option key={option} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="productos-form-group">
-                      <label className="productos-label">Nombre del Producto:</label>
-                      <input
-                        className="productos-input"
-                        type="text"
-                        name="name"
-                        value={producto.name}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="productos-form-group">
-                      <label className="productos-label">Precio:</label>
-                      <input
-                        className="productos-input"
-                        type="text"
-                        name="price"
-                        value={formatPrice(producto.price)}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="productos-form-group">
-                      <label className="productos-label">Ingredientes:</label>
-                      <textarea
-                        className="productos-input"
-                        name="ingredients"
-                        value={producto.ingredients}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <button className="productos-button" type="submit">Guardar</button>
-                    <button className="productos-button" type="button" onClick={handleBack}>Atrás</button>
-                  </form>
-                </>
-              ) : (
-                <>
-                  <button className="productos-button" onClick={handleAdd}>Agregar</button>
-                  <input className="hidden" type="file" accept=".json" onChange={handleFileUpload} />
-                  <select className="category-select" value={selectedCategory} onChange={handleCategoryChange}>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>{category}</option>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+      {isAdding && (
+        <>
+          <div className="edit-productos-overlay" onClick={handleBack}></div>
+          <div className="edit-productos-modal">
+            <div className="edit-productos-modal-content">
+              <span className="productos-close" onClick={handleBack}>&times;</span>
+              <h2 className="modal-header">Editar Producto</h2>
+              <form className="productos-form" onSubmit={handleSubmit}>
+                <div className="productos-form-group">
+                  <label className="productos-label">ID:</label>
+                  <input
+                    className="productos-input"
+                    type="text"
+                    name="id"
+                    value={producto.id}
+                    onChange={handleInputChange}
+                    readOnly
+                  />
+                </div>
+                <div className="productos-form-group">
+                  <label className="productos-label">Categoría:</label>
+                  <select
+                    className="productos-input"
+                    name="category"
+                    value={producto.category}
+                    onChange={handleInputChange}
+                  >
+                    {categoryOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
                     ))}
                   </select>
-                  <div className="productos-list">
-                    {filteredProductos.map((item) => (
-                      <div key={item.id} className="productos-item">
-                        <span>{item.name} - {formatPrice(item.price)}</span>
-                        <div className="button-container">
-                          <button onClick={() => handleEdit(item)}><FaEdit /></button>
-                          <button onClick={() => handleDelete(item.id)}><FaTrash /></button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+                </div>
+                <div className="productos-form-group">
+                  <label className="productos-label">Nombre del Producto:</label>
+                  <input
+                    className="productos-input"
+                    type="text"
+                    name="name"
+                    value={producto.name}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="productos-form-group">
+                  <label className="productos-label">Precio:</label>
+                  <input
+                    className="productos-input"
+                    type="text"
+                    name="price"
+                    value={formatPrice(producto.price)}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="productos-form-group">
+                  <label className="productos-label">Ingredientes:</label>
+                  <textarea
+                    className="productos-input"
+                    name="ingredients"
+                    value={producto.ingredients}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="productos-form-group">
+                  <label className="productos-label">Estado:</label>
+                  <select
+                    className="productos-input"
+                    name="status"
+                    value={producto.status}
+                    onChange={handleInputChange}
+                  >
+                    <option value="ENABLE">ENABLE</option>
+                    <option value="DISABLE">DISABLE</option>
+                  </select>
+                </div>
+                <button className="productos-button" type="submit">Guardar</button>
+                <button className="productos-button" type="button" onClick={handleBack}>Atrás</button>
+              </form>
             </div>
           </div>
         </>

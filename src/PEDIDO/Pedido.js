@@ -29,6 +29,7 @@ const Pedido = ({ modalVisible, closeModal }) => {
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [billAmount, setBillAmount] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const formatPrice = (value) => {
     if (value === null || value === undefined || value === '') return '0';
     const stringValue = value.toString();
@@ -165,11 +166,15 @@ const Pedido = ({ modalVisible, closeModal }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setClient({ ...client, [name]: value });
+    setClient({ 
+      ...client, 
+      [name]: name === 'name' ? value.toUpperCase() : value 
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true); // Set loading state
     try {
       if (userType === 'cliente') {
         if (!client.id) {
@@ -223,6 +228,8 @@ const Pedido = ({ modalVisible, closeModal }) => {
       if (toast) {
         toast.error("Error al registrar");
       }
+    } finally {
+      setIsSubmitting(false); // Reset loading state
     }
   };
 
@@ -313,6 +320,10 @@ const Pedido = ({ modalVisible, closeModal }) => {
   };
 
   const addToCart = (product) => {
+    if (product.status === 'DISABLE') {
+      toast.error('Este producto está deshabilitado y no se puede agregar al carrito.');
+      return;
+    }
     setSelectedProduct(product);
     setSelectedIngredients(product.ingredients ? product.ingredients.split(', ') : []);
   };
@@ -505,7 +516,6 @@ const handleBillAmountChange = (e) => {
                         >
                           <option value="">Seleccionar método de pago</option>
                           <option value="NEQUI">NEQUI</option>
-                          <option value="BANCOLOMBIA">BANCOLOMBIA</option>
                           <option value="EFECTIVO">EFECTIVO</option>
                         </select>
                       </div>
@@ -560,9 +570,11 @@ const handleBillAmountChange = (e) => {
                         </div>
                       </div>
                       <div className="form-buttons">
-                        <button type="submit" className="realizar-pedido-button"><FaSave /> Realizar Pedido</button>
-                        <button type="button" className="confirmar-pedido-button" onClick={confirmarPedido}><FaCopy /> Confirmar Pedido</button>
                         <button type="button" className="add-products-button" onClick={() => setIsAdding(true)}><FaCartPlus /> Añadir Productos</button>
+                        <button type="button" className="confirmar-pedido-button" onClick={confirmarPedido}><FaCopy /> Confirmar Pedido</button>
+                        <button type="submit" className="realizar-pedido-button" disabled={isSubmitting}>
+                          {isSubmitting ? 'Procesando...' : <><FaSave /> Realizar Pedido</>}
+                        </button>
                       </div>
                     </form>
                   )}
@@ -609,15 +621,17 @@ const handleBillAmountChange = (e) => {
                 ))}
                 <h3>Total a Pagar: {formatPrice(calculateTotal())}</h3>
               </div>
-              <button className="close-button" onClick={() => setIsAdding(false)}>Listo</button>
+              <div className="productos-buttons-container">
               <select className="category-select" value={selectedCategory} onChange={handleCategoryChange}>
-                {categories.map((category) => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+                <button className="close-button" onClick={() => setIsAdding(false)}>Listo</button>
+              </div>
               <div className="productos-list">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="productos-item">
+                  <div key={product.id} className={`productos-item ${product.status === 'DISABLE' ? 'disable' : ''}`}>
                     <span>{product.name} - {formatPrice(product.price)}</span>
                     <button onClick={() => addToCart(product)}><FaCartPlus /></button>
                   </div>
@@ -638,7 +652,7 @@ const handleBillAmountChange = (e) => {
               <h2>¿Qué ingredientes deseas retirar?</h2>
               <div className="ingredientes-buttons-container">
                 <button onClick={handleSelectAllIngredients}>Eliminar todo</button>
-                <button onClick={addProductToCart}><FaCartPlus /> Seguir con la Cesta</button>
+                <button onClick={addProductToCart}><FaCartPlus /> Añadir a la cesta</button>
               </div>
               {selectedProduct.ingredients.split(', ').map((ingredient) => (
                 <div key={ingredient}>

@@ -9,6 +9,7 @@ const Detalles = ({ order, closeModal }) => {
   const [domiciliarios, setDomiciliarios] = useState([]);
   const [selectedDomiciliario, setSelectedDomiciliario] = useState('');
   const [isDomicilio, setIsDomicilio] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isDomicilio) {
@@ -31,6 +32,7 @@ const Detalles = ({ order, closeModal }) => {
   };
 
   const updateOrderStatus = async (status, domiciliario = null) => {
+    setLoading(true);
     try {
       const now = new Date();
       const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
@@ -72,6 +74,8 @@ const Detalles = ({ order, closeModal }) => {
     } catch (error) {
       console.error('Error updating order status:', error);
       toast.error('Error al actualizar el estado del pedido');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,11 +117,21 @@ const Detalles = ({ order, closeModal }) => {
   };
 
   const handleLlamadoEnCocina = () => {
-    updateOrderStatus('ENCOCINA');
+    if (!loading) {
+      updateOrderStatus('ENCOCINA');
+    }
+  };
+
+  const handleEmpacado = () => {
+    if (!loading) {
+      updateOrderStatus('EMPACADO');
+    }
   };
 
   const handleEnDomicilio = () => {
-    updateOrderStatus('ENDOMICILIO', selectedDomiciliario);
+    if (!loading) {
+      updateOrderStatus('ENDOMICILIO', selectedDomiciliario);
+    }
   };
 
   return (
@@ -131,19 +145,26 @@ const Detalles = ({ order, closeModal }) => {
           <div className="detalles-content">
             <h3>Productos:</h3>
             {order.cart.map((product, index) => (
-              <div key={index}>
-                <span>{product.name}</span>
-                <ul>
+              <div key={index} className="product-item">
+                <span className="product-name">{product.name}</span>
+                <ul className="ingredient-list">
                   {product.ingredients.map((ingredient) => (
-                    <li key={ingredient}>Sin {ingredient}</li>
+                    <li key={ingredient} className="ingredient-item">Sin {ingredient}</li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <button className="detalles-button" onClick={handleLlamadoEnCocina}>LLAMADO EN COCINA</button>
+          <div className="button-container">
+            <button className="detalles-button" onClick={handleLlamadoEnCocina} disabled={loading}>
+              {loading ? 'Procesando...' : 'LLAMADO EN COCINA'}
+            </button>
+            <button className="detalles-button" onClick={handleEmpacado} disabled={loading}>
+              {loading ? 'Procesando...' : 'EMPACADO'}
+            </button>
+          </div>
           <div className="domicilio-section">
-            <label>
+            <label className="domicilio-label">
               <input
                 type="checkbox"
                 checked={isDomicilio}
@@ -153,6 +174,7 @@ const Detalles = ({ order, closeModal }) => {
             </label>
             {isDomicilio && (
               <select
+                className="domiciliario-select"
                 value={selectedDomiciliario}
                 onChange={(e) => setSelectedDomiciliario(e.target.value)}
               >
@@ -163,7 +185,9 @@ const Detalles = ({ order, closeModal }) => {
               </select>
             )}
             {isDomicilio && (
-              <button className="detalles-button" onClick={handleEnDomicilio}>ENDOMICILIO</button>
+              <button className="detalles-button" onClick={handleEnDomicilio} disabled={loading}>
+                {loading ? 'Procesando...' : 'ENDOMICILIO'}
+              </button>
             )}
           </div>
         </div>

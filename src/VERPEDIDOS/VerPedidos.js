@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import Detalles from '../RESOURCES/DETALLES/Detalles'; // Import Detalles component
@@ -12,6 +12,7 @@ const VerPedidos = () => {
   const [selectedOrder, setSelectedOrder] = useState(null); // State for selected order
   const [period, setPeriod] = useState('MORNING'); // State for selected period
   const [userId, setUserId] = useState(''); // State for user ID
+  const ordersListRef = useRef(null); // Ref for orders list
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -54,6 +55,20 @@ const VerPedidos = () => {
     fetchOrders();
   }, [period, userId]);
 
+  useEffect(() => {
+    const ordersList = ordersListRef.current;
+    if (ordersList) {
+      const handleWheel = (event) => {
+        if (event.deltaY !== 0) {
+          event.preventDefault();
+          ordersList.scrollLeft += event.deltaY;
+        }
+      };
+      ordersList.addEventListener('wheel', handleWheel);
+      return () => ordersList.removeEventListener('wheel', handleWheel);
+    }
+  }, []);
+
   const handleOrderClick = (order) => {
     setSelectedOrder(order);
     console.log('Order ID:', order.id); // Log the order ID
@@ -69,12 +84,12 @@ const VerPedidos = () => {
       <h2>Pedidos Recientes</h2>
       <div className="period-select">
         <label htmlFor="period">Seleccionar Periodo:</label>
-        <select id="period" value={period} onChange={handlePeriodChange}>
+        <select id="period" className="period-select-dropdown" value={period} onChange={handlePeriodChange}>
           <option value="MORNING">MORNING</option>
           <option value="NIGHT">NIGHT</option>
         </select>
       </div>
-      <div className="verpedidos-orders-list">
+      <div className="verpedidos-orders-list" ref={ordersListRef}>
         {orders.map((order) => {
           let statusClass = '';
           switch (order.status) {
@@ -83,6 +98,9 @@ const VerPedidos = () => {
               break;
             case 'ENCOCINA':
               statusClass = 'en-cocina';
+              break;
+            case 'EMPACADO':
+              statusClass = 'EMPACADO';
               break;
             case 'ENDOMICILIO':
               statusClass = 'domicilio';
