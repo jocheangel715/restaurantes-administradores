@@ -18,6 +18,7 @@ const Homepage = () => {
   const [proveedoresModalVisible, setProveedoresModalVisible] = useState(false);
   const [productosModalVisible, setProductosModalVisible] = useState(false);
   const [pedidoModalVisible, setPedidoModalVisible] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     const logoutButton = document.getElementById('logout-button');
@@ -69,6 +70,13 @@ const Homepage = () => {
     productosButton.addEventListener('click', handleProductosClick);
     pedidoButton.addEventListener('click', handlePedidoClick);
 
+    // Get the authenticated user's email
+    const user = auth.currentUser;
+    if (user) {
+      const email = user.email.split('@')[0];
+      setUserEmail(email);
+    }
+
     return () => {
       logoutButton.removeEventListener('click', handleLogout);
       inventoryButton.removeEventListener('click', handleInventoryClick);
@@ -94,7 +102,7 @@ const Homepage = () => {
       </button>
       <div className="dashboard">
         <div className="welcome-container">
-          <h1 className="classname-welcome-message">Welcome, Admin</h1>
+          <h1 className="classname-welcome-message">Welcome, {userEmail}</h1>
         </div>
         {inventoryModalVisible && <Inventory modalVisible={inventoryModalVisible} closeModal={closeInventoryModal} />}
         {clientsModalVisible && <Clientes modalVisible={clientsModalVisible} closeModal={closeClientsModal} />}

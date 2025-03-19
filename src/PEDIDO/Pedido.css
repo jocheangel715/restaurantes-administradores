@@ -413,9 +413,9 @@ button:hover {
   margin-top: 20px;
 }
 
-.confirmar-pedido-button,.realizar-pedido-button, .add-products-button {
-  background-color: var(--button-color);
-  color: var(--button-text-color);
+.confirmar-pedido-button {
+  background-color: #28a745; /* Verde */
+  color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
@@ -423,9 +423,39 @@ button:hover {
   transition: background-color 0.3s;
 }
 
-.confirmar-pedido-button:hover,.realizar-pedido-button:hover, .add-products-button:hover {
-  background-color: var(--button-hover-color);
+.realizar-pedido-button {
+  background-color: #007bff; /* Azul */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
+
+.add-products-button {
+  background-color: #ffc107; /* Amarillo */
+  color: black;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+/* Efectos hover */
+.confirmar-pedido-button:hover {
+  background-color: #218838; /* Verde más oscuro */
+}
+
+.realizar-pedido-button:hover {
+  background-color: #0056b3; /* Azul más oscuro */
+}
+
+.add-products-button:hover {
+  background-color: #e0a800; /* Amarillo más oscuro */
+}
+
 
 .pedido-summary-container {
   margin-top: 20px;
@@ -449,7 +479,7 @@ input[type="checkbox"] {
   appearance: none;
   width: 24px;
   height: 24px;
-  border: 2px solid #4CAF50;
+  border: 2px solid var(--button-color);
   border-radius: 6px;
   position: relative;
   cursor: pointer;
@@ -457,8 +487,8 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"]:checked {
-  background-color: #4CAF50;
-  border-color: #4CAF50;
+  background-color: var(--button-color);
+  border-color: var(--button-color);
 }
 
 input[type="checkbox"]:checked::before {
