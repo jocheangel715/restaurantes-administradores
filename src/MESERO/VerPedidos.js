@@ -1,11 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-import Detalles from '../RESOURCES/DETALLES/Detalles'; // Import Detalles component
+import Detalles from './Detalles'; // Import Detalles component
 import './VerPedidos.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getAuth, onAuthStateChanged } from 'firebase/auth'; // Import getAuth and onAuthStateChanged
+
+const formatPrice = (value) => {
+  if (value === null || value === undefined || value === '') return '0';
+  const stringValue = value.toString();
+  const numberValue = parseFloat(stringValue.replace(/[$,]/g, ''));
+  return `$${numberValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+};
 
 const VerPedidos = () => {
   const [orders, setOrders] = useState([]);
@@ -42,7 +49,7 @@ const VerPedidos = () => {
           const data = docSnap.data();
           const userOrders = data[period] || {};
           const items = Object.keys(userOrders).filter(key => key !== 'balance').map(key => ({ id: key, ...userOrders[key] }));
-          const filteredItems = items.filter(item => item.status !== 'ENTREGADO' && !item.tableNumber); // Filter out orders with tableNumber
+          const filteredItems = items.filter(item => item.status !== 'ENTREGADO' && item.tableNumber); // Filter by status and tableNumber
           filteredItems.sort((a, b) => (b.timestamp && b.timestamp.toDate()) - (a.timestamp && a.timestamp.toDate())); // Sort by timestamp
           setOrders(filteredItems);
 
@@ -69,7 +76,7 @@ const VerPedidos = () => {
       const handleWheel = (event) => {
         if (event.deltaY !== 0) {
           event.preventDefault();
-          ordersList.scrollLeft += event.deltaY;
+          ordersList.scrollTop += event.deltaY;
         }
       };
       ordersList.addEventListener('wheel', handleWheel);
@@ -87,36 +94,36 @@ const VerPedidos = () => {
   };
 
   return (
-    <div className="verpedidos-container">
+    <div className="verpedidos-container-unique">
       <ToastContainer />
       <h2>Pedidos Recientes</h2>
-      <div className="status-summary">
+      <div className="status-summary-unique">
         {Object.entries(statusCounts).map(([status, count]) => (
           <span key={status}>{count} {status.replace(/([A-Z])/g, ' $1').toUpperCase()}</span>
         ))}
       </div>
-      <div className="period-select">
+      <div className="period-select-unique">
         <label htmlFor="period">Seleccionar Periodo:</label>
-        <select id="period" className="period-select-dropdown" value={period} onChange={handlePeriodChange}>
+        <select id="period" className="period-select-dropdown-unique" value={period} onChange={handlePeriodChange}>
           <option value="MORNING">MORNING</option>
           <option value="NIGHT">NIGHT</option>
         </select>
       </div>
-      <div className="verpedidos-orders-list" ref={ordersListRef}>
+      <div className="verpedidos-orders-list-unique" ref={ordersListRef}>
         {orders.map((order) => {
           let statusClass = '';
           switch (order.status) {
             case 'PEDIDOTOMADO':
-              statusClass = 'pedido-tomado';
+              statusClass = 'pedido-tomado-unique';
               break;
             case 'ENCOCINA':
-              statusClass = 'en-cocina';
+              statusClass = 'en-cocina-unique';
               break;
             case 'EMPACADO':
-              statusClass = 'EMPACADO';
+              statusClass = 'empacado-unique';
               break;
             case 'ENDOMICILIO':
-              statusClass = 'domicilio';
+              statusClass = 'domicilio-unique';
               break;
             default:
               break;
@@ -124,16 +131,13 @@ const VerPedidos = () => {
           return (
             <div
               key={order.id}
-              className={`verpedidos-order-item ${statusClass}`}
+              className={`verpedidos-order-item-unique ${statusClass}`}
               onClick={() => handleOrderClick(order)}
             >
               <h3>Pedido #{order.idPedido}</h3>
-              <p><strong>Cliente:</strong> {order.clientName}</p>
-              <p><strong>Teléfono:</strong> {order.clientPhone}</p>
-              <p><strong>Dirección:</strong> {order.clientAddress} - {order.clientBarrio}</p>
-              <p><strong>Total:</strong> {order.total}</p>
+              <p><strong>Mesa:</strong> {order.tableNumber}</p>
+              <p><strong>Total:</strong> {formatPrice(order.total)}</p> {/* Format total price */}
               <p><strong>Estado:</strong> {order.status}</p>
-              <p><strong>Fecha:</strong> {order.timestamp ? order.timestamp.toDate().toLocaleString() : 'N/A'}</p>
             </div>
           );
         })}

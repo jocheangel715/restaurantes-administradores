@@ -1,17 +1,18 @@
 /* Contenedor principal */
-.verpedidos-container {
+.verpedidos-container-unique {
   max-width: 90%;
-  width: 800px;
+  width: auto;
   padding: 20px;
   background: #121212; /* Negro elegante */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   border-radius: 12px;
   animation: fadeIn 0.5s ease-in-out;
   text-align: center;
+  height: 400px;
 }
 
 /* Título */
-.verpedidos-container h2 {
+.verpedidos-container-unique h2 {
   font-size: 2rem;
   color: #ffffff;
   margin-bottom: 20px;
@@ -21,14 +22,14 @@
 }
 
 /* Resumen de estados */
-.status-summary {
+.status-summary-unique {
   display: flex;
   justify-content: center;
   gap: 10px;
   margin-bottom: 20px;
 }
 
-.status-summary span {
+.status-summary-unique span {
   background: #333;
   color: #fff;
   padding: 5px 10px;
@@ -38,36 +39,36 @@
 }
 
 /* Colores para diferentes estados */
-.status-summary span.PEDIDOTOMADO {
+.status-summary-unique span.PEDIDOTOMADO {
   background: #ff4b4b; /* Rojo */
 }
 
-.status-summary span.ENCOCINA {
+.status-summary-unique span.ENCOCINA {
   background: #ffeb3b; /* Amarillo */
   color: #000; /* Texto negro para contraste */
 }
 
-.status-summary span.EMPACADO {
+.status-summary-unique span.EMPACADO {
   background: #2196F3; /* Azul */
 }
 
-.status-summary span.ENDOMICILIO {
+.status-summary-unique span.ENDOMICILIO {
   background: #4caf50; /* Verde */
 }
 
 /* Lista de pedidos */
-.verpedidos-orders-list {
+.verpedidos-orders-list-unique {
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-direction: column; /* Display orders vertically */
   gap: 12px;
   padding: 12px;
+  overflow-y: auto; /* Enable vertical scrolling */
   scrollbar-width: thin;
   scrollbar-color: #6a11cb #1c1c1c;
 }
 
 /* Estilo de cada pedido */
-.verpedidos-order-item {
+.verpedidos-order-item-unique {
   background: linear-gradient(135deg, #6a11cb, #2575fc);
   color: white;
   padding: 15px;
@@ -81,55 +82,56 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  height: 150px; /* Ensure height is always 150px */
 }
 
 /* Estilo para PEDIDOTOMADO */
-.verpedidos-order-item.pedido-tomado {
+.verpedidos-order-item-unique.pedido-tomado-unique {
   background: linear-gradient(135deg, #ff4b4b, #ff0000); /* Rojo */
 }
 
 /* Estilo para ENCOCINA */
-.verpedidos-order-item.en-cocina {
+.verpedidos-order-item-unique.en-cocina-unique {
   background: linear-gradient(135deg, #ffeb3b, #ffc107); /* Amarillo */
 }
 
 /* Estilo para EMPACADO */
-.verpedidos-order-item.EMPACADO {
+.verpedidos-order-item-unique.empacado-unique {
   background: linear-gradient(135deg, #2196F3, #0D47A1); /* Azul */
 }
 
 /* Estilo para DOMICILIO */
-.verpedidos-order-item.domicilio {
+.verpedidos-order-item-unique.domicilio-unique {
   background: linear-gradient(135deg, #4caf50, #2e7d32); /* Verde */
 }
 
-.verpedidos-order-item:hover {
+.verpedidos-order-item-unique:hover {
   transform: translateY(-6px);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
 }
 
 /* Texto dentro del pedido */
-.verpedidos-order-item h3 {
+.verpedidos-order-item-unique h3 {
   font-size: 1.3rem;
   margin-bottom: 10px;
   font-weight: bold;
 }
 
-.verpedidos-order-item p {
+.verpedidos-order-item-unique p {
   font-size: 1rem;
   margin: 4px 0;
   opacity: 0.9;
 }
 
 /* Controles de paginación */
-.pagination-controls {
+.pagination-controls-unique {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-top: 20px;
 }
 
-.pagination-controls button {
+.pagination-controls-unique button {
   background-color: #6a11cb;
   color: white;
   border: none;
@@ -141,17 +143,17 @@
   transition: background-color 0.3s, transform 0.2s;
 }
 
-.pagination-controls button:hover {
+.pagination-controls-unique button:hover {
   background-color: #2575fc;
   transform: scale(1.05);
 }
 
-.pagination-controls button:disabled {
+.pagination-controls-unique button:disabled {
   background-color: #444;
   cursor: not-allowed;
 }
 
-.pagination-controls span {
+.pagination-controls-unique span {
   font-size: 1.2rem;
   color: white;
   font-weight: bold;
@@ -191,13 +193,13 @@
   }
 }
 
-.verpedidos-order-item {
+.verpedidos-order-item-unique {
   word-wrap: break-word;  /* Rompe palabras largas */
   overflow-wrap: break-word; /* Alternativa para navegadores modernos */
   white-space: normal; /* Permite saltos de línea */
 }
 
-.period-select-dropdown {
+.period-select-dropdown-unique {
   width: 100%;
   padding: 10px;
   border: 1px solid #ff9100;
@@ -209,7 +211,7 @@
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.period-select-dropdown:focus {
+.period-select-dropdown-unique:focus {
   border-color: #2575fc;
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
   outline: none;

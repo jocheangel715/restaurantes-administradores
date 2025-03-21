@@ -88,6 +88,28 @@ const Homepage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const updateTitle = () => {
+      if (inventoryModalVisible) {
+        document.title = 'Inventario';
+      } else if (clientsModalVisible) {
+        document.title = 'Empleados';
+      } else if (barriosModalVisible) {
+        document.title = 'Barrios';
+      } else if (proveedoresModalVisible) {
+        document.title = 'Proveedores';
+      } else if (productosModalVisible) {
+        document.title = 'Productos';
+      } else if (pedidoModalVisible) {
+        document.title = 'Pedido';
+      } else {
+        document.title = 'Homepage';
+      }
+    };
+
+    updateTitle();
+  }, [inventoryModalVisible, clientsModalVisible, barriosModalVisible, proveedoresModalVisible, productosModalVisible, pedidoModalVisible]);
+
   const closeInventoryModal = () => setInventoryModalVisible(false);
   const closeClientsModal = () => setClientsModalVisible(false);
   const closeBarriosModal = () => setBarriosModalVisible(false);
