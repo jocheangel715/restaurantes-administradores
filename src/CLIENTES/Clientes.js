@@ -32,7 +32,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
 
   const fetchLastClientId = async () => {
     try {
-      const q = query(collection(db, 'CLIENTES'), orderBy('id', 'desc'), limit(1));
+      const q = query(collection(db, 'EMPLEADOS'), orderBy('id', 'desc'), limit(1));
       const querySnapshot = await getDocs(q);
       let lastId = 0;
       querySnapshot.forEach((doc) => {
@@ -46,7 +46,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
 
   const fetchClients = async () => {
     try {
-      const q = query(collection(db, 'CLIENTES'), orderBy('id', 'asc'));
+      const q = query(collection(db, 'EMPLEADOS'), orderBy('id', 'asc'));
       const querySnapshot = await getDocs(q);
       const items = [];
       querySnapshot.forEach((doc) => {
@@ -106,7 +106,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
         salary: client.salary.replace(/[^0-9.]/g, ''),
         schedule: `${client.scheduleStart}-${client.scheduleEnd}`
       };
-      await setDoc(doc(db, "CLIENTES", client.id), formattedClient);
+      await setDoc(doc(db, "EMPLEADOS", client.id), formattedClient);
       toast.success("Cliente registrado correctamente");
       fetchClients();
       handleBack();
@@ -131,7 +131,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
 
   const confirmDelete = async () => {
     try {
-      await deleteDoc(doc(db, 'CLIENTES', deleteId));
+      await deleteDoc(doc(db, 'EMPLEADOS', deleteId));
       toast.success('Cliente eliminado correctamente');
       fetchClients();
     } catch (error) {
@@ -156,7 +156,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
   const handleAdd = () => {
     fetchLastClientId();
     setIsAdding(true);
-    setClient({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', barrio: '', deliveryPrice: '', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
+    setClient({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
   };
 
   const handleCloseModal = () => {
@@ -234,6 +234,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
                         <option value="ADMINISTRADOR">ADMINISTRADOR</option>
                         <option value="DOMICILIARIO">DOMICILIARIO</option>
                         <option value="COCINERO">COCINERO</option>
+                        <option value="MESERO">MESERO</option>
                       </select>
                     </div>
                     <div className="clients-form-group">

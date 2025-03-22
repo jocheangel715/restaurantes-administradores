@@ -354,7 +354,7 @@ label {
   color: var(--text-color);
 }
 
-input[type="text"] {
+.inputmesero{
   padding: 10px;
   border: 1px solid var(--input-border);
   border-radius: 5px;

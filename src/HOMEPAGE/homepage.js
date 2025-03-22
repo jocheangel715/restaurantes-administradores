@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getAuth, signOut } from "firebase/auth";
 import { app } from '../firebase';
 import './homepage.css';
-import { FaSignOutAlt, FaBoxOpen, FaUsers, FaMapMarkerAlt, FaTruck, FaUtensils, FaClipboardList } from 'react-icons/fa';
+import { FaSignOutAlt, FaBoxOpen, FaUsers, FaMapMarkerAlt, FaTruck, FaUtensils, FaClipboardList, FaClock } from 'react-icons/fa'; // Import FaClock icon
 import Inventory from '../INVENTARIO/Inventory';
 import Clientes from '../CLIENTES/Clientes';
 import Barrios from '../BARRIOS/Barrios';
@@ -10,6 +10,7 @@ import Proveedores from '../PROVEEDORES/Proveedores';
 import Productos from '../PRODUCTOS/Productos';
 import Pedido from '../PEDIDO/Pedido';
 import VerPedidos from '../VERPEDIDOS/VerPedidos'; // Import VerPedidos component
+import Turno from '../TURNO/Turno'; // Import Turno component
 
 const Homepage = () => {
   const [inventoryModalVisible, setInventoryModalVisible] = useState(false);
@@ -18,6 +19,7 @@ const Homepage = () => {
   const [proveedoresModalVisible, setProveedoresModalVisible] = useState(false);
   const [productosModalVisible, setProductosModalVisible] = useState(false);
   const [pedidoModalVisible, setPedidoModalVisible] = useState(false);
+  const [turnoModalVisible, setTurnoModalVisible] = useState(false); // Add state for Turno modal visibility
   const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
@@ -28,6 +30,7 @@ const Homepage = () => {
     const proveedoresButton = document.getElementById('proveedores-button');
     const productosButton = document.getElementById('productos-button');
     const pedidoButton = document.getElementById('pedido-button');
+    const turnoButton = document.getElementById('turno-button'); // Get Turno button element
     const auth = getAuth(app);
 
     const handleLogout = () => {
@@ -62,6 +65,10 @@ const Homepage = () => {
       setPedidoModalVisible(true);
     };
 
+    const handleTurnoClick = () => {
+      setTurnoModalVisible(true);
+    };
+
     logoutButton.addEventListener('click', handleLogout);
     inventoryButton.addEventListener('click', handleInventoryClick);
     clientsButton.addEventListener('click', handleClientsClick);
@@ -69,6 +76,7 @@ const Homepage = () => {
     proveedoresButton.addEventListener('click', handleProveedoresClick);
     productosButton.addEventListener('click', handleProductosClick);
     pedidoButton.addEventListener('click', handlePedidoClick);
+    turnoButton.addEventListener('click', handleTurnoClick);
 
     // Get the authenticated user's email
     const user = auth.currentUser;
@@ -85,6 +93,7 @@ const Homepage = () => {
       proveedoresButton.removeEventListener('click', handleProveedoresClick);
       productosButton.removeEventListener('click', handleProductosClick);
       pedidoButton.removeEventListener('click', handlePedidoClick);
+      turnoButton.removeEventListener('click', handleTurnoClick);
     };
   }, []);
 
@@ -102,13 +111,15 @@ const Homepage = () => {
         document.title = 'Productos';
       } else if (pedidoModalVisible) {
         document.title = 'Pedido';
+      } else if (turnoModalVisible) {
+        document.title = 'Turno';
       } else {
         document.title = 'Homepage';
       }
     };
 
     updateTitle();
-  }, [inventoryModalVisible, clientsModalVisible, barriosModalVisible, proveedoresModalVisible, productosModalVisible, pedidoModalVisible]);
+  }, [inventoryModalVisible, clientsModalVisible, barriosModalVisible, proveedoresModalVisible, productosModalVisible, pedidoModalVisible, turnoModalVisible]);
 
   const closeInventoryModal = () => setInventoryModalVisible(false);
   const closeClientsModal = () => setClientsModalVisible(false);
@@ -116,6 +127,7 @@ const Homepage = () => {
   const closeProveedoresModal = () => setProveedoresModalVisible(false);
   const closeProductosModal = () => setProductosModalVisible(false);
   const closePedidoModal = () => setPedidoModalVisible(false);
+  const closeTurnoModal = () => setTurnoModalVisible(false);
 
   return (
     <>
@@ -132,6 +144,7 @@ const Homepage = () => {
         {proveedoresModalVisible && <Proveedores modalVisible={proveedoresModalVisible} closeModal={closeProveedoresModal} />}
         {productosModalVisible && <Productos modalVisible={productosModalVisible} closeModal={closeProductosModal} />}
         {pedidoModalVisible && <Pedido modalVisible={pedidoModalVisible} closeModal={closePedidoModal} />}
+        {turnoModalVisible && <Turno modalVisible={turnoModalVisible} closeModal={closeTurnoModal} />}
         <div className="buttons-container">
           <button id="inventory-button" className="classname-inventory-button">
             <FaBoxOpen />
@@ -156,6 +169,10 @@ const Homepage = () => {
           <button id="pedido-button" className="classname-pedido-button">
             <FaClipboardList />
             <span>Pedido</span>
+          </button>
+          <button id="turno-button" className="classname-turno-button">
+            <FaClock />
+            <span>Turno</span>
           </button>
         </div>
         <div className="verpedidos-container-wrapper">

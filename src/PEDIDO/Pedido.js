@@ -6,6 +6,7 @@ import { db } from '../firebase';
 import { doc, setDoc, collection, getDocs, query, where, orderBy, limit, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
 import ConfirmationDelete from '../RESOURCES/THEMES/CONFIRMATIONDELETE/ConfirmationDelete';
 import { FaEdit, FaTrash, FaSave, FaArrowLeft, FaCartPlus, FaCopy } from 'react-icons/fa'; // Import icons
+import { getAuth } from 'firebase/auth'; // Import getAuth from firebase/auth
 
 const Pedido = ({ modalVisible, closeModal }) => {
   const [userType, setUserType] = useState('');
@@ -36,6 +37,11 @@ const Pedido = ({ modalVisible, closeModal }) => {
     const numberValue = parseFloat(stringValue.replace(/[$,]/g, ''));
     return `$${numberValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   };
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const userEmail = user ? user.email : '';
+  const userName = userEmail.split('@')[0];
 
   useEffect(() => {
     if (modalVisible) {
@@ -181,6 +187,9 @@ const Pedido = ({ modalVisible, closeModal }) => {
           const newId = await generateNewClientId();
           await setDoc(doc(db, "CLIENTES", newId), { ...client, id: newId });
           toast.success("Cliente registrado correctamente");
+        } else {
+          await setDoc(doc(db, "CLIENTES", client.id), client, { merge: true });
+          toast.success("Cliente actualizado correctamente");
         }
         // Handle order creation logic here
         const newOrderId = await generateNewOrderId();
@@ -201,7 +210,8 @@ const Pedido = ({ modalVisible, closeModal }) => {
           subtotal: subtotal,
           valorDomicilio: valorDomicilio,
           total: total,
-          timestamp: Timestamp.now()
+          timestamp: Timestamp.now(),
+          pedidotomado: userName, // Add the authenticated user's name
         };
 
         const now = new Date();

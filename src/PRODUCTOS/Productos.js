@@ -94,7 +94,7 @@ const Productos = ({ modalVisible, closeModal }) => {
     try {
       const formattedProducto = {
         ...producto,
-        price: producto.price.replace(/[^0-9.]/g, ''),
+        price: producto.price.toString().replace(/[^0-9.]/g, ''), // Ensure price is a string
       };
       await setDoc(doc(db, "MENU", producto.id), formattedProducto);
       toast.success("Producto registrado correctamente");

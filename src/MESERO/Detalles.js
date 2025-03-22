@@ -4,7 +4,7 @@ import { doc, getDoc, collection, getDocs, query, orderBy, setDoc } from 'fireba
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Detalles.css';
-import { FaCartPlus } from 'react-icons/fa'; // Import icon
+import { FaCartPlus, FaSave } from 'react-icons/fa'; // Import icons
 
 const Detalles = ({ order, closeModal }) => {
   const [loading, setLoading] = useState(false);
@@ -182,113 +182,114 @@ const Detalles = ({ order, closeModal }) => {
 
   return (
     <div className="detalles-container">
-      <ToastContainer />
-      <div className="detalles-overlay" onClick={closeModal}></div>
-      <div className="detalles-modal">
-        <div className="detalles-modal-content">
-          <span className="detalles-close" onClick={closeModal}>&times;</span>
-          <h2>Detalles del Pedido</h2>
-          <div className="detalles-content">
-            <h3>Productos:</h3>
+  <ToastContainer />
+  <div className="detalles-overlay" onClick={closeModal}></div>
+  <div className="detalles-modal">
+    <div className="detalles-modal-content">
+      <span className="detalles-close" onClick={closeModal}>&times;</span>
+      <h2>Detalles del Pedido</h2>
+      <div className="detalles-content">
+        <h3>Productos:</h3>
+        {order.cart.map((product, index) => (
+          <div key={index} className="product-item">
+            <span className="product-name">{product.name}</span>
+            <ul className="ingredient-list">
+              {product.ingredients.map((ingredient) => (
+                <li key={ingredient} className="ingredient-item">Sin {ingredient}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <div className="button-container">
+        <button className="detalles-button" onClick={handleLlamadoEnCocina} disabled={loading}>
+          {loading ? 'Procesando...' : 'LLAMADO EN COCINA'}
+        </button>
+        <button className="detalles-button" onClick={handleEmpacado} disabled={loading}>
+          {loading ? 'Procesando...' : 'ENTREGADO'}
+        </button>
+        <button className="detalles-button" onClick={handleAgregarProductos} disabled={loading}>
+          {loading ? 'Procesando...' : <><FaCartPlus /> Agregar más productos</>}
+        </button>
+        <button className="detalles-button" onClick={handleSaveOrder} disabled={loading}>
+          {loading ? 'Procesando...' : <><FaSave /> Guardar Pedido</>}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* Modal de selección de productos */}
+  {isAdding && (
+    <>
+      <div className="productos-overlay" onClick={() => setIsAdding(false)}></div>
+      <div className="productos-modal">
+        <div className="productos-modal-content">
+          <span className="productos-close" onClick={() => setIsAdding(false)}>&times;</span>
+          <h2>Seleccionar Productos</h2>
+          <div className="pedido-summary">
+            <h3>Pedido con Restricciones</h3>
             {order.cart.map((product, index) => (
-              <div key={index} className="product-item">
-                <span className="product-name">{product.name}</span>
-                <ul className="ingredient-list">
+              <div key={index}>
+                <span>{product.name} - {product.price}</span>
+                <ul>
                   {product.ingredients.map((ingredient) => (
-                    <li key={ingredient} className="ingredient-item">Sin {ingredient}</li>
+                    <li key={ingredient}>Sin {ingredient}</li>
                   ))}
                 </ul>
               </div>
             ))}
+            <h3>Total a Pagar: {calculateTotal()}</h3>
           </div>
-          <div className="button-container">
-            <button className="detalles-button" onClick={handleLlamadoEnCocina} disabled={loading}>
-              {loading ? 'Procesando...' : 'LLAMADO EN COCINA'}
-            </button>
-            <button className="detalles-button" onClick={handleEmpacado} disabled={loading}>
-              {loading ? 'Procesando...' : 'ENTREGADO'}
-            </button>
-            <button className="detalles-button" onClick={handleAgregarProductos} disabled={loading}>
-              {loading ? 'Procesando...' : 'Agregar más productos'}
-            </button>
-            <button className="detalles-button" onClick={handleSaveOrder} disabled={loading}>
-              {loading ? 'Procesando...' : 'Guardar Pedido'}
-            </button>
+          <div className="productos-buttons-container">
+            <select className="category-select inputdetalles" value={selectedCategory} onChange={handleCategoryChange}>
+              {categories.map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+            <button className="close-button" onClick={() => setIsAdding(false)}>Listo</button>
+          </div>
+          <div className="productos-list">
+            {filteredProducts.map((product) => (
+              <div key={product.id} className={`productos-item ${product.status === 'DISABLE' ? 'disable' : ''}`}>
+                <span>{product.name} - {product.price}</span>
+                <button onClick={() => addToCart(product)}><FaCartPlus /></button>
+              </div>
+            ))}
           </div>
         </div>
       </div>
+    </>
+  )}
 
-      {/* Modal de selección de productos */}
-      {isAdding && (
-        <>
-          <div className="productos-overlay" onClick={() => setIsAdding(false)}></div>
-          <div className="productos-modal">
-            <div className="productos-modal-content">
-              <span className="productos-close" onClick={() => setIsAdding(false)}>&times;</span>
-              <h2>Seleccionar Productos</h2>
-              <div className="pedido-summary">
-                <h3>Pedido con Restricciones</h3>
-                {order.cart.map((product, index) => (
-                  <div key={index}>
-                    <span>{product.name} - {product.price}</span>
-                    <ul>
-                      {product.ingredients.map((ingredient) => (
-                        <li key={ingredient}>Sin {ingredient}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-                <h3>Total a Pagar: {calculateTotal()}</h3>
-              </div>
-              <div className="productos-buttons-container">
-                <select className="category-select" value={selectedCategory} onChange={handleCategoryChange}>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-                <button className="close-button" onClick={() => setIsAdding(false)}>Listo</button>
-              </div>
-              <div className="productos-list">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className={`productos-item ${product.status === 'DISABLE' ? 'disable' : ''}`}>
-                    <span>{product.name} - {product.price}</span>
-                    <button onClick={() => addToCart(product)}><FaCartPlus /></button>
-                  </div>
-                ))}
-              </div>
-            </div>
+  {/* Modal de selección de ingredientes */}
+  {selectedProduct && (
+    <>
+      <div className="ingredientes-overlay" onClick={() => setSelectedProduct(null)}></div>
+      <div className="ingredientes-modal">
+        <div className="ingredientes-modal-content">
+          <span className="ingredientes-close" onClick={() => setSelectedProduct(null)}>&times;</span>
+          <h2>¿Qué ingredientes deseas retirar?</h2>
+          <div className="ingredientes-buttons-container">
+            <button onClick={addProductToCart}><FaCartPlus /> Añadir a la cesta</button>
           </div>
-        </>
-      )}
-
-      {/* Modal de selección de ingredientes */}
-      {selectedProduct && (
-        <>
-          <div className="ingredientes-overlay" onClick={() => setSelectedProduct(null)}></div>
-          <div className="ingredientes-modal">
-            <div className="ingredientes-modal-content">
-              <span className="ingredientes-close" onClick={() => setSelectedProduct(null)}>&times;</span>
-              <h2>¿Qué ingredientes deseas retirar?</h2>
-              <div className="ingredientes-buttons-container">
-                <button onClick={addProductToCart}><FaCartPlus /> Añadir a la cesta</button>
-              </div>
-              {selectedProduct.ingredients.split(', ').map((ingredient) => (
-                <div key={ingredient}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={!selectedIngredients.includes(ingredient)}
-                      onChange={() => handleIngredientChange(ingredient)}
-                    />
-                    Sin {ingredient}
-                  </label>
-                </div>
-              ))}
+          {selectedProduct.ingredients.split(', ').map((ingredient) => (
+            <div key={ingredient}>
+              <label>
+                <input
+                  type="checkbox"
+                  className="inputdetalles"
+                  checked={!selectedIngredients.includes(ingredient)}
+                  onChange={() => handleIngredientChange(ingredient)}
+                />
+                Sin {ingredient}
+              </label>
             </div>
-          </div>
-        </>
-      )}
-    </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )}
+</div>
   );
 };
 

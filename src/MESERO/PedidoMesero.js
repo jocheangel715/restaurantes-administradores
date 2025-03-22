@@ -5,6 +5,7 @@ import './PedidoMesero.css';
 import { db } from '../firebase';
 import { doc, setDoc, collection, getDocs, query, orderBy, Timestamp, getDoc } from 'firebase/firestore'; // Import necessary Firestore functions
 import { FaSave, FaArrowLeft, FaCartPlus, FaCopy } from 'react-icons/fa'; // Import icons
+import { getAuth } from 'firebase/auth'; // Import getAuth from firebase/auth
 
 const formatPrice = (value) => {
   if (value === null || value === undefined || value === '') return '0';
@@ -23,6 +24,11 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
   const [selectedCategory, setSelectedCategory] = useState('Todas las Categorías');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const userEmail = user ? user.email : '';
+  const userName = userEmail.split('@')[0];
 
   useEffect(() => {
     if (modalVisible) {
@@ -60,7 +66,8 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
         status: "PEDIDOTOMADO",
         cart: cart,
         total: calculateTotal(), // Add total to order data
-        timestamp: Timestamp.now()
+        timestamp: Timestamp.now(),
+        pedidotomado: userName, // Add the authenticated user's name
       };
 
       const now = new Date();
@@ -187,14 +194,17 @@ ${pedido}
               <h2 className="modal-header">Crear Pedido</h2>
               <form className="pedido-form" onSubmit={handleSubmit}>
                 <div className="pedido-form-group">
-                  <label>Número de Mesa:</label>
-                  <input
-                    type="text"
-                    name="tableNumber"
-                    value={tableNumber}
-                    onChange={(e) => setTableNumber(e.target.value)}
-                    required
-                  />
+                <label>Número de Mesa:</label>
+<input
+  type="text"
+  name="tableNumber"
+  className="inputpedidomesero"
+  value={tableNumber}
+  onChange={(e) => setTableNumber(e.target.value.toUpperCase())}
+  required
+/>
+
+
                 </div>
                 <div className="pedido-summary-container">
                   <h3>Resumen del Pedido</h3>
@@ -285,11 +295,13 @@ ${pedido}
               {selectedProduct.ingredients.split(', ').map((ingredient) => (
                 <div key={ingredient}>
                   <label>
-                    <input
-                      type="checkbox"
-                      checked={!selectedIngredients.includes(ingredient)}
-                      onChange={() => handleIngredientChange(ingredient)}
-                    />
+                  <input
+  type="checkbox"
+  className="inputpedidomesero"
+  checked={!selectedIngredients.includes(ingredient)}
+  onChange={() => handleIngredientChange(ingredient)}
+/>
+
                     Sin {ingredient}
                   </label>
                 </div>
