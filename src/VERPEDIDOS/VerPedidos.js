@@ -42,7 +42,7 @@ const VerPedidos = () => {
           const data = docSnap.data();
           const userOrders = data[period] || {};
           const items = Object.keys(userOrders).filter(key => key !== 'balance').map(key => ({ id: key, ...userOrders[key] }));
-          const filteredItems = items.filter(item => item.status !== 'ENTREGADO' && !item.tableNumber); // Filter out orders with tableNumber
+          const filteredItems = items.filter(item => item.status !== 'ENTREGADOs' && !item.tableNumber); // Filter out orders with tableNumber
           filteredItems.sort((a, b) => (b.timestamp && b.timestamp.toDate()) - (a.timestamp && a.timestamp.toDate())); // Sort by timestamp
           setOrders(filteredItems);
 
