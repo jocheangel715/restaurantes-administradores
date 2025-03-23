@@ -47,7 +47,7 @@ const Detalles = ({ order, closeModal }) => {
 
   const fetchDomiciliarios = async () => {
     try {
-      const q = query(collection(db, 'CLIENTES'), where('role', '==', 'DOMICILIARIO'));
+      const q = query(collection(db, 'EMPLEADOS'), where('role', '==', 'DOMICILIARIO'));
       const querySnapshot = await getDocs(q);
       const items = [];
       querySnapshot.forEach((doc) => {
