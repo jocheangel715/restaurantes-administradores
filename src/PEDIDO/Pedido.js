@@ -5,7 +5,7 @@ import './Pedido.css';
 import { db } from '../firebase';
 import { doc, setDoc, collection, getDocs, query, where, orderBy, limit, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
 import ConfirmationDelete from '../RESOURCES/THEMES/CONFIRMATIONDELETE/ConfirmationDelete';
-import { FaEdit, FaTrash, FaSave, FaArrowLeft, FaCartPlus, FaCopy } from 'react-icons/fa'; // Import icons
+import { FaEdit, FaTrash, FaSave, FaArrowLeft, FaCartPlus, FaCopy, FaPlus, FaMinus, FaSearch } from 'react-icons/fa'; // Import icons
 import { getAuth } from 'firebase/auth'; // Import getAuth from firebase/auth
 
 const Pedido = ({ modalVisible, closeModal }) => {
@@ -64,6 +64,29 @@ const Pedido = ({ modalVisible, closeModal }) => {
     } catch (error) {
       console.error('Error fetching clients:', error);
     }
+  };
+
+  const determineDateAndShift = () => {
+    const now = new Date();
+    let date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    let period = 'MORNING';
+  
+    const hours = now.getHours();
+    if (hours >= 17 || hours < 3) {
+      period = 'NIGHT';
+      if (hours < 3) {
+        const previousDay = new Date(now);
+        previousDay.setDate(now.getDate() - 1);
+        date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+      }
+    } else if (hours >= 3 && hours < 6) {
+      period = 'NIGHT';
+      const previousDay = new Date(now);
+      previousDay.setDate(now.getDate() - 1);
+      date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+    }
+  
+    return { date, period };
   };
 
   const fetchProveedores = async () => {
@@ -196,7 +219,7 @@ const Pedido = ({ modalVisible, closeModal }) => {
         const subtotal = calculateTotal();
         const valorDomicilio = parseFloat(barrios.find(barrio => barrio.name === client.barrio)?.deliveryPrice) || 0;
         const total = subtotal + valorDomicilio;
-
+  
         const orderData = {
           idPedido: newOrderId,
           clientId: client.id,
@@ -213,21 +236,19 @@ const Pedido = ({ modalVisible, closeModal }) => {
           timestamp: Timestamp.now(),
           pedidotomado: userName, // Add the authenticated user's name
         };
-
-        const now = new Date();
-        const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
-        const period = now.getHours() < 17 ? 'MORNING' : 'NIGHT';
+  
+        const { date, period } = determineDateAndShift();
         const docId = date;
-
+  
         // Generate a unique ID for the order map field
         const uniqueOrderId = `${newOrderId}_${Date.now()}`;
-
+  
         await setDoc(doc(db, "PEDIDOS", docId), {
           [period]: {
             [uniqueOrderId]: orderData
           }
         }, { merge: true });
-
+  
         toast.success("Pedido registrado correctamente");
       } else {
         // Handle proveedor order logic here
@@ -254,17 +275,15 @@ const Pedido = ({ modalVisible, closeModal }) => {
   };
 
   const generateNewOrderId = async () => {
-    const now = new Date();
-    const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    const { date, period } = determineDateAndShift();
     const docId = date;
-
+  
     const docRef = doc(db, 'PEDIDOS', docId);
     const docSnap = await getDoc(docRef);
-
+  
     let lastId = 0;
     if (docSnap.exists()) {
       const data = docSnap.data();
-      const period = now.getHours() < 17 ? 'MORNING' : 'NIGHT';
       const orders = data[period] ? Object.keys(data[period]) : [];
       if (orders.length > 0) {
         lastId = Math.max(...orders.map(orderId => parseInt(orderId.split('_')[0], 10)));
@@ -334,17 +353,70 @@ const Pedido = ({ modalVisible, closeModal }) => {
       toast.error('Este producto está deshabilitado y no se puede agregar al carrito.');
       return;
     }
-    setSelectedProduct(product);
-    setSelectedIngredients(product.ingredients ? product.ingredients.split(', ') : []);
+    setSelectedProduct({ ...product, isEditing: false }); // Set isEditing to false for adding
+    setSelectedIngredients([]); // Start with no ingredients selected
   };
-
-  const handleIngredientChange = (ingredient) => {
-    setSelectedIngredients((prevIngredients) =>
-      prevIngredients.includes(ingredient)
-        ? prevIngredients.filter((item) => item !== ingredient)
-        : [...prevIngredients, ingredient]
+  const EditToCart = async (product, index) => {
+    if (product.status === 'DISABLE') {
+      toast.error('Este producto está deshabilitado y no se puede editar.');
+      return;
+    }
+  
+    try {
+      const productRef = doc(db, 'MENU', product.id);
+      const productSnap = await getDoc(productRef);
+  
+      if (productSnap.exists()) {
+        const productData = productSnap.data();
+        setSelectedProduct({
+          ...product,
+          ingredients: productData.ingredients || [],
+          isEditing: true, // Set isEditing to true for editing
+          cartIndex: index, // Track the specific instance in the cart
+        });
+        setSelectedIngredients(product.ingredients); // Select only the ingredients of the product
+      } else {
+        toast.error('No se encontraron datos del producto.');
+      }
+    } catch (error) {
+      console.error('Error al obtener los ingredientes del producto:', error);
+      toast.error('Error al obtener los ingredientes del producto.');
+    }
+  };
+  
+  const saveProductChanges = () => {
+    setCart((prevCart) =>
+      prevCart.map((item, idx) =>
+        idx === selectedProduct.cartIndex // Update only the specific instance in the cart
+          ? {
+              ...item,
+              ingredients: selectedIngredients, // Update the ingredients with the new restrictions
+            }
+          : item
+      )
     );
+    setSelectedProduct(null);
+    toast.success('Producto actualizado correctamente.');
   };
+  
+
+const handleIngredientChange = (ingredient) => {
+  setSelectedIngredients((prevIngredients) =>
+    prevIngredients.includes(ingredient)
+      ? prevIngredients.filter((item) => item !== ingredient) // Deselect ingredient
+      : [...prevIngredients, ingredient] // Select ingredient
+  );
+};
+
+const handleSelectAllIngredients = () => {
+  if (selectedProduct && typeof selectedProduct.ingredients === 'string') {
+    setSelectedIngredients(
+      selectedIngredients.length === selectedProduct.ingredients.split(', ').length
+        ? [] // Deselect all if all are selected
+        : selectedProduct.ingredients.split(', ') // Select all
+    );
+  }
+};
 
   const handleCategoryChange = (e) => {
     const category = e.target.value;
@@ -357,29 +429,23 @@ const Pedido = ({ modalVisible, closeModal }) => {
   };
 
   const calculateTotal = () => {
-    return cart.reduce((total, product) => total + parseFloat(product.price), 0);
+    return formatPrice(cart.reduce((total, product) => total + parseFloat(product.price), 0));
   };
 
   const calculateChange = () => {
-    const subtotal = calculateTotal();
+    const subtotal = parseFloat(calculateTotal().replace(/[$,]/g, ''));
     const deliveryCost = parseFloat(barrios.find(barrio => barrio.name === client.barrio)?.deliveryPrice) || 0;
     const total = subtotal + deliveryCost;
     const bill = billAmount ? parseFloat(billAmount) : 0;
-    return bill - total;
-  };
-
-  const handleSelectAllIngredients = () => {
-    if (selectedIngredients.length === 0) {
-      setSelectedIngredients(selectedProduct.ingredients.split(', '));
-    } else {
-      setSelectedIngredients([]);
-    }
+    return formatPrice(bill - total);
   };
 
   const addProductToCart = () => {
     const productWithRestrictions = {
       ...selectedProduct,
-      ingredients: selectedIngredients.length === 0 ? [] : selectedProduct.ingredients.split(', ').filter(ingredient => !selectedIngredients.includes(ingredient)),
+      ingredients: typeof selectedProduct.ingredients === 'string'
+        ? selectedProduct.ingredients.split(', ').filter((ingredient) => selectedIngredients.includes(ingredient)) // Save only selected ingredients
+        : [],
     };
     setCart([...cart, productWithRestrictions]);
     setSelectedProduct(null);
@@ -399,7 +465,7 @@ const Pedido = ({ modalVisible, closeModal }) => {
         .join('\n');
 
     const direccion = `${client.address} - ${client.barrio}`;
-    const subtotal = parseFloat(calculateTotal()) || 0;
+    const subtotal = parseFloat(calculateTotal().replace(/[$,]/g, '')) || 0;
     const costoDomicilio = parseFloat(barrios.find(barrio => barrio.name === client.barrio)?.deliveryPrice) || 0;
     const metodoPago = paymentMethod;
     const billete = billAmount ? parseFloat(billAmount) : 0;
@@ -439,7 +505,39 @@ const handleBillAmountChange = (e) => {
   }
 };
 
+const handleIncreaseQuantity = (index) => {
+  setCart((prevCart) => {
+    const updatedCart = [...prevCart];
+    const productToAdd = { ...updatedCart[index] }; // Clone the product
+    updatedCart.push(productToAdd); // Add the same product
+    return updatedCart;
+  });
+};
 
+const handleDecreaseQuantity = (index) => {
+  setCart((prevCart) => {
+    const updatedCart = [...prevCart];
+    updatedCart.splice(index, 1); // Remove the product at the given index
+    return updatedCart;
+  });
+};
+
+const handleSearchProduct = (product) => {
+  // Busca el producto en el carrito
+  const productInCart = cart.find((item) => item.id === product.id);
+
+  if (productInCart) {
+    // Establece el producto seleccionado y sus ingredientes para editar
+    setSelectedProduct(productInCart);
+    setSelectedIngredients(
+      typeof productInCart.ingredients === 'string'
+        ? productInCart.ingredients.split(', ')
+        : []
+    );
+  } else {
+    toast.error('El producto no está en el carrito.');
+  }
+};
 
   return (
     <div className="pedido-container">
@@ -562,7 +660,7 @@ const handleBillAmountChange = (e) => {
                           <strong>Dirección:</strong> {client.address} - {client.barrio}
                         </div>
                         <div>
-                          <strong>Subtotal:</strong> {formatPrice(calculateTotal())}
+                          <strong>Subtotal:</strong> {calculateTotal()}
                         </div>
                         <div>
                           <strong>Costo del Domicilio:</strong> {formatPrice(parseFloat(barrios.find(barrio => barrio.name === client.barrio)?.deliveryPrice) || 0)}
@@ -618,17 +716,24 @@ const handleBillAmountChange = (e) => {
               <span className="productos-close" onClick={() => setIsAdding(false)}>&times;</span>
               <h2>Seleccionar Productos</h2>
               <div className="pedido-summary">
-                <h3>Pedido con Restricciones</h3>
-                {cart.map((product, index) => (
-                  <div key={index}>
-                    <span>{product.name} - {formatPrice(product.price)}</span>
-                    <ul>
-                      {product.ingredients.map((ingredient) => (
-                        <li key={ingredient}>Sin {ingredient}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+              <h3>Pedido con Restricciones</h3>
+{cart.map((product, index) => (
+  <div key={index} className="product-container">
+    <div className="product-info">
+      <span>{product.name} - {formatPrice(product.price)}</span>
+      <ul>
+        {product.ingredients.map((ingredient) => (
+          <li key={ingredient}>Sin {ingredient}</li>
+        ))}
+      </ul>
+    </div>
+    <div className="product-buttons">
+      <button onClick={() => handleIncreaseQuantity(index)}><FaPlus /></button>
+      <button onClick={() => handleDecreaseQuantity(index)}><FaMinus /></button>
+      <button onClick={() => EditToCart(product, index)}><FaSearch /></button> {/* Pass index */}
+    </div>
+  </div>
+))}
                 <h3>Total a Pagar: {formatPrice(calculateTotal())}</h3>
               </div>
               <div className="productos-buttons-container">
@@ -652,34 +757,41 @@ const handleBillAmountChange = (e) => {
         </>
       )}
   
-      {/* Modal de selección de ingredientes */}
-      {selectedProduct && (
-        <>
-          <div className="ingredientes-overlay" onClick={() => setSelectedProduct(null)}></div>
-          <div className="ingredientes-modal">
-            <div className="ingredientes-modal-content">
-              <span className="ingredientes-close" onClick={() => setSelectedProduct(null)}>&times;</span>
-              <h2>¿Qué ingredientes deseas retirar?</h2>
-              <div className="ingredientes-buttons-container">
-                <button onClick={handleSelectAllIngredients}>Eliminar todo</button>
-                <button onClick={addProductToCart}><FaCartPlus /> Añadir a la cesta</button>
-              </div>
-              {selectedProduct.ingredients.split(', ').map((ingredient) => (
-                <div key={ingredient}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={!selectedIngredients.includes(ingredient)}
-                      onChange={() => handleIngredientChange(ingredient)}
-                    />
-                    Sin {ingredient}
-                  </label>
-                </div>
-              ))}
+      {/* Modal de selección de ingredientes para primera vez */}
+{selectedProduct && (
+  <>
+    <div className="ingredientes-overlay" onClick={() => setSelectedProduct(null)}></div>
+    <div className="ingredientes-modal">
+      <div className="ingredientes-modal-content">
+        <span className="ingredientes-close" onClick={() => setSelectedProduct(null)}>&times;</span>
+        <h2>
+          {selectedProduct.isEditing
+            ? '¿Qué ingredientes deseas retirar del producto a editar?'
+            : '¿Qué ingredientes deseas retirar?'}
+        </h2>
+        <div className="ingredientes-buttons-container">
+          <button onClick={handleSelectAllIngredients}>Eliminar todo</button>
+          <button onClick={selectedProduct.isEditing ? saveProductChanges : addProductToCart}>
+            <FaCartPlus /> {selectedProduct.isEditing ? 'Guardar cambios' : 'Agregar a la cesta'}
+          </button>
+        </div>
+        {typeof selectedProduct.ingredients === 'string' &&
+          selectedProduct.ingredients.split(', ').map((ingredient) => (
+            <div key={ingredient}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={selectedIngredients.includes(ingredient)} // Show only selected ingredients
+                  onChange={() => handleIngredientChange(ingredient)}
+                />
+                Sin {ingredient}
+              </label>
             </div>
-          </div>
-        </>
-      )}
+          ))}
+      </div>
+    </div>
+  </>
+)}
   
       {/* Modal de confirmación de eliminación */}
       {showConfirmation && (

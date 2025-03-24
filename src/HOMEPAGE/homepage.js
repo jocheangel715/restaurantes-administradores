@@ -22,6 +22,29 @@ const Homepage = () => {
   const [turnoModalVisible, setTurnoModalVisible] = useState(false); // Add state for Turno modal visibility
   const [userEmail, setUserEmail] = useState('');
 
+  const determineDateAndShift = () => {
+    const now = new Date();
+    let date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    let period = 'MORNING';
+
+    const hours = now.getHours();
+    if (hours >= 17 || hours < 3) {
+      period = 'NIGHT';
+      if (hours < 3) {
+        const previousDay = new Date(now);
+        previousDay.setDate(now.getDate() - 1);
+        date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+      }
+    } else if (hours >= 3 && hours < 6) {
+      period = 'NIGHT';
+      const previousDay = new Date(now);
+      previousDay.setDate(now.getDate() - 1);
+      date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+    }
+
+    return { date, period };
+  };
+
   useEffect(() => {
     const logoutButton = document.getElementById('logout-button');
     const inventoryButton = document.getElementById('inventory-button');
@@ -120,6 +143,11 @@ const Homepage = () => {
 
     updateTitle();
   }, [inventoryModalVisible, clientsModalVisible, barriosModalVisible, proveedoresModalVisible, productosModalVisible, pedidoModalVisible, turnoModalVisible]);
+
+  useEffect(() => {
+    const { date, period } = determineDateAndShift();
+    console.log(`Current date: ${date}, Current period: ${period}`);
+  }, []);
 
   const closeInventoryModal = () => setInventoryModalVisible(false);
   const closeClientsModal = () => setClientsModalVisible(false);

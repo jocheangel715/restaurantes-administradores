@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import './PedidoMesero.css';
 import { db } from '../firebase';
 import { doc, setDoc, collection, getDocs, query, orderBy, Timestamp, getDoc } from 'firebase/firestore'; // Import necessary Firestore functions
-import { FaSave, FaArrowLeft, FaCartPlus, FaCopy } from 'react-icons/fa'; // Import icons
+import { FaSave, FaArrowLeft, FaCartPlus, FaCopy, FaPlus, FaMinus, FaSearch } from 'react-icons/fa'; // Import icons
 import { getAuth } from 'firebase/auth'; // Import getAuth from firebase/auth
 
 const formatPrice = (value) => {
@@ -55,6 +55,29 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
     }
   };
 
+  const determineDateAndShift = () => {
+    const now = new Date();
+    let date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    let period = 'MORNING';
+
+    const hours = now.getHours();
+    if (hours >= 17 || hours < 3) {
+      period = 'NIGHT';
+      if (hours < 3) {
+        const previousDay = new Date(now);
+        previousDay.setDate(now.getDate() - 1);
+        date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+      }
+    } else if (hours >= 3 && hours < 6) {
+      period = 'NIGHT';
+      const previousDay = new Date(now);
+      previousDay.setDate(now.getDate() - 1);
+      date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+    }
+
+    return { date, period };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true); // Set loading state
@@ -70,9 +93,7 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
         pedidotomado: userName, // Add the authenticated user's name
       };
 
-      const now = new Date();
-      const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
-      const period = now.getHours() < 17 ? 'MORNING' : 'NIGHT';
+      const { date, period } = determineDateAndShift();
       const docId = date;
 
       // Generate a unique ID for the order map field
@@ -95,8 +116,7 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
   };
 
   const generateNewOrderId = async () => {
-    const now = new Date();
-    const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    const { date, period } = determineDateAndShift();
     const docId = date;
 
     const docRef = doc(db, 'PEDIDOS', docId);
@@ -105,7 +125,6 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
     let lastId = 0;
     if (docSnap.exists()) {
       const data = docSnap.data();
-      const period = now.getHours() < 17 ? 'MORNING' : 'NIGHT';
       const orders = data[period] ? Object.keys(data[period]) : [];
       if (orders.length > 0) {
         lastId = Math.max(...orders.map(orderId => parseInt(orderId.split('_')[0], 10)));
@@ -120,7 +139,8 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
       return;
     }
     setSelectedProduct(product);
-    setSelectedIngredients(product.ingredients ? product.ingredients.split(', ') : []);
+    // Asegúrate de que ningún ingrediente esté seleccionado por defecto
+    setSelectedIngredients([]);
   };
 
   const handleIngredientChange = (ingredient) => {
@@ -142,17 +162,21 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
   };
 
   const addProductToCart = () => {
-    const productWithRestrictions = {
-      ...selectedProduct,
-      ingredients: selectedIngredients.length === 0 ? [] : selectedProduct.ingredients.split(', ').filter(ingredient => !selectedIngredients.includes(ingredient)),
+    const productWithSelectedIngredients = {
+        ...selectedProduct,
+        // Guardar solo los ingredientes seleccionados
+        ingredients: selectedIngredients,
     };
-    setCart([...cart, productWithRestrictions]);
+
+    setCart([...cart, productWithSelectedIngredients]);
     setSelectedProduct(null);
-    toast.success(`${selectedProduct.name} añadido a la cesta con restricciones`);
-  };
+    setSelectedIngredients([]); // Limpiar los ingredientes seleccionados
+    toast.success(`${selectedProduct.name} añadido a la cesta con los ingredientes seleccionados`);
+};
+
 
   const calculateTotal = () => {
-    return cart.reduce((total, product) => total + parseFloat(product.price), 0);
+    return formatPrice(cart.reduce((total, product) => total + parseFloat(product.price), 0));
   };
 
   const confirmarPedido = () => {
@@ -160,14 +184,14 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
         `${product.name} - ${product.ingredients.map(ingredient => `Sin ${ingredient}`).join(', ')}`)
         .join('\n');
 
-    const total = parseFloat(calculateTotal()) || 0;
+    const total = parseFloat(calculateTotal().replace(/[$,]/g, '')) || 0;
 
     const mensaje = `✅ ¡Pedido confirmado! Esto es lo que nos pediste:
 
 🛒 *Pedido:* 
 ${pedido}
 
-💰 Total a pagar: ${total}
+💰 Total a pagar: ${formatPrice(total)}
 
 📢 Si hay algún error o quieres modificar algo, avísanos lo más pronto posible.  
 
@@ -179,6 +203,81 @@ ${pedido}
     navigator.clipboard.writeText(mensaje)
       .then(() => toast.success('Pedido copiado al portapapeles'))
       .catch(() => toast.error('Error al copiar el pedido'));
+  };
+
+  const handleIncreaseQuantity = (index) => {
+    setCart((prevCart) => {
+      const updatedCart = [...prevCart];
+      const productToAdd = { ...updatedCart[index] }; // Clone the product
+      updatedCart.push(productToAdd); // Add the same product
+      return updatedCart;
+    });
+  };
+
+  const handleDecreaseQuantity = (index) => {
+    setCart((prevCart) => {
+      const updatedCart = [...prevCart];
+      updatedCart.splice(index, 1); // Remove the product at the given index
+      return updatedCart;
+    });
+  };
+
+  const handleSearchProduct = (product) => {
+    const productInCart = cart.find((item) => item.id === product.id);
+
+    if (productInCart) {
+      setSelectedProduct(productInCart);
+      setSelectedIngredients(
+        typeof productInCart.ingredients === 'string'
+          ? productInCart.ingredients.split(', ')
+          : []
+      );
+    } else {
+      toast.error('El producto no está en el carrito.');
+    }
+  };
+
+  const EditToCart = async (product, index) => {
+    if (product.status === 'DISABLE') {
+      toast.error('Este producto está deshabilitado y no se puede editar.');
+      return;
+    }
+
+    try {
+      const productRef = doc(db, 'MENU', product.id);
+      const productSnap = await getDoc(productRef);
+
+      if (productSnap.exists()) {
+        const productData = productSnap.data();
+        setSelectedProduct({
+          ...product,
+          ingredients: productData.ingredients || [],
+          isEditing: true,
+          cartIndex: index,
+        });
+        setSelectedIngredients(product.ingredients);
+      } else {
+        toast.error('No se encontraron datos del producto.');
+      }
+    } catch (error) {
+      console.error('Error al obtener los ingredientes del producto:', error);
+      toast.error('Error al obtener los ingredientes del producto.');
+    }
+  };
+
+  const saveProductChanges = () => {
+    setCart((prevCart) =>
+      prevCart.map((item, idx) =>
+        idx === selectedProduct.cartIndex
+          ? {
+              ...item,
+              ingredients: selectedIngredients,
+            }
+          : item
+      )
+    );
+    setSelectedProduct(null);
+    toast.success('Producto actualizado correctamente.');
   };
 
   return (
@@ -249,13 +348,20 @@ ${pedido}
               <div className="pedido-summary">
                 <h3>Pedido con Restricciones</h3>
                 {cart.map((product, index) => (
-                  <div key={index}>
-                    <span>{product.name} - {product.price}</span>
-                    <ul>
-                      {product.ingredients.map((ingredient) => (
-                        <li key={ingredient}>Sin {ingredient}</li>
-                      ))}
-                    </ul>
+                  <div key={index} className="product-container">
+                    <div className="product-info">
+                      <span>{product.name} - {formatPrice(product.price)}</span>
+                      <ul>
+                        {product.ingredients.map((ingredient) => (
+                          <li key={ingredient}>Sin {ingredient}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="product-buttons">
+                      <button onClick={() => handleIncreaseQuantity(index)}><FaPlus /></button>
+                      <button onClick={() => handleDecreaseQuantity(index)}><FaMinus /></button>
+                      <button onClick={() => EditToCart(product, index)}><FaSearch /></button>
+                    </div>
                   </div>
                 ))}
                 <h3>Total a Pagar: {calculateTotal()}</h3>
@@ -288,24 +394,29 @@ ${pedido}
           <div className="ingredientes-modal">
             <div className="ingredientes-modal-content">
               <span className="ingredientes-close" onClick={() => setSelectedProduct(null)}>&times;</span>
-              <h2>¿Qué ingredientes deseas retirar?</h2>
+              <h2>
+                {selectedProduct.isEditing
+                  ? '¿Qué ingredientes deseas retirar del producto a editar?'
+                  : '¿Qué ingredientes deseas retirar?'}
+              </h2>
               <div className="ingredientes-buttons-container">
-                <button onClick={addProductToCart}><FaCartPlus /> Añadir a la cesta</button>
+                <button onClick={selectedProduct.isEditing ? saveProductChanges : addProductToCart}>
+                  <FaCartPlus /> {selectedProduct.isEditing ? 'Guardar cambios' : 'Agregar a la cesta'}
+                </button>
               </div>
-              {selectedProduct.ingredients.split(', ').map((ingredient) => (
-                <div key={ingredient}>
-                  <label>
-                  <input
-  type="checkbox"
-  className="inputpedidomesero"
-  checked={!selectedIngredients.includes(ingredient)}
-  onChange={() => handleIngredientChange(ingredient)}
-/>
-
-                    Sin {ingredient}
-                  </label>
-                </div>
-              ))}
+              {typeof selectedProduct.ingredients === 'string' &&
+                selectedProduct.ingredients.split(', ').map((ingredient) => (
+                  <div key={ingredient}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={selectedIngredients.includes(ingredient)}
+                        onChange={() => handleIngredientChange(ingredient)}
+                      />
+                      Sin {ingredient}
+                    </label>
+                  </div>
+                ))}
             </div>
           </div>
         </>

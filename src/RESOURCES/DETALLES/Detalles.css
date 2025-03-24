@@ -85,9 +85,12 @@
   z-index: 1001;
   width: 90%;
   max-width: 500px;
+  max-height: 80vh; /* Ajusta según necesidad */
+  overflow-y: auto; /* Permite el desplazamiento */
   transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
   opacity: 1;
 }
+
 
 .detalles-modal-content {
   position: relative;

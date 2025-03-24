@@ -39,11 +39,33 @@ const Detalles = ({ order, closeModal }) => {
     }
   };
 
+  const determineDateAndShift = () => {
+    const now = new Date();
+    let date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    let period = 'MORNING';
+
+    const hours = now.getHours();
+    if (hours >= 17 || hours < 3) {
+      period = 'NIGHT';
+      if (hours < 3) {
+        const previousDay = new Date(now);
+        previousDay.setDate(now.getDate() - 1);
+        date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+      }
+    } else if (hours >= 3 && hours < 6) {
+      period = 'NIGHT';
+      const previousDay = new Date(now);
+      previousDay.setDate(now.getDate() - 1);
+      date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+    }
+
+    return { date, period };
+  };
+
   const updateOrderStatus = async (status) => {
     setLoading(true);
     try {
-      const now = new Date();
-      const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+      const { date, period } = determineDateAndShift();
       const docId = date;
 
       const orderDoc = doc(db, 'PEDIDOS', docId);
@@ -52,16 +74,12 @@ const Detalles = ({ order, closeModal }) => {
       if (orderSnapshot.exists()) {
         const data = orderSnapshot.data();
         console.log('Order data:', data); // Log order data
-        const periods = ['MORNING', 'NIGHT'];
         let orderFound = false;
 
-        for (const period of periods) {
-          if (data[period] && data[period][order.id]) {
-            data[period][order.id].status = status;
-            await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
-            orderFound = true;
-            break;
-          }
+        if (data[period] && data[period][order.id]) {
+          data[period][order.id].status = status;
+          await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
+          orderFound = true;
         }
 
         if (orderFound) {
@@ -141,8 +159,7 @@ const Detalles = ({ order, closeModal }) => {
   const handleSaveOrder = async () => {
     setLoading(true);
     try {
-      const now = new Date();
-      const date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+      const { date, period } = determineDateAndShift();
       const docId = date;
 
       const orderDoc = doc(db, 'PEDIDOS', docId);
@@ -150,17 +167,13 @@ const Detalles = ({ order, closeModal }) => {
 
       if (orderSnapshot.exists()) {
         const data = orderSnapshot.data();
-        const periods = ['MORNING', 'NIGHT'];
         let orderFound = false;
 
-        for (const period of periods) {
-          if (data[period] && data[period][order.id]) {
-            data[period][order.id].cart = order.cart;
-            data[period][order.id].total = calculateTotal(); // Update total
-            await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
-            orderFound = true;
-            break;
-          }
+        if (data[period] && data[period][order.id]) {
+          data[period][order.id].cart = order.cart;
+          data[period][order.id].total = calculateTotal(); // Update total
+          await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
+          orderFound = true;
         }
 
         if (orderFound) {

@@ -33,9 +33,41 @@ const Turno = ({ modalVisible, closeModal }) => {
     fetchDeliveryPersons();
   }, []);
 
+  const getAdjustedDate = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    if (hours === 0 || hours === 1 || hours === 2) {
+      now.setDate(now.getDate() - 1);
+    }
+    return now.toLocaleDateString('es-ES').replace(/\//g, '-');
+  };
+
+  const determineDateAndShift = () => {
+    const now = new Date();
+    let date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    let period = 'MORNING';
+
+    const hours = now.getHours();
+    if (hours >= 17 || hours < 3) {
+      period = 'NIGHT';
+      if (hours < 3) {
+        const previousDay = new Date(now);
+        previousDay.setDate(now.getDate() - 1);
+        date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+      }
+    } else if (hours >= 3 && hours < 6) {
+      period = 'NIGHT';
+      const previousDay = new Date(now);
+      previousDay.setDate(now.getDate() - 1);
+      date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+    }
+
+    return { date, period };
+  };
+
   const fetchTurnData = async (turnTime) => {
     const db = getFirestore();
-    const date = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+    const { date } = determineDateAndShift();
     const domiciliosDocRef = doc(db, 'DOMICILIOS', date);
     const domiciliosDocSnap = await getDoc(domiciliosDocRef);
     const baseDocRef = doc(db, 'BASE', date);
@@ -46,6 +78,12 @@ const Turno = ({ modalVisible, closeModal }) => {
       if (baseData[turnTime]) {
         setNequiValueBase(formatPrice(baseData[turnTime].BASENEQUIINICIO));
         setCashValueBase(formatPrice(baseData[turnTime].BASEEFECTIVOINICIO));
+        if (baseData[turnTime].BASENEQUIFIN) {
+          setNequiValueEnd(formatPrice(baseData[turnTime].BASENEQUIFIN));
+        }
+        if (baseData[turnTime].BASEEFECTIVOFIN) {
+          setCashValueEnd(formatPrice(baseData[turnTime].BASEEFECTIVOFIN));
+        }
       }
     }
 
@@ -70,7 +108,7 @@ const Turno = ({ modalVisible, closeModal }) => {
 
   const fetchOrderData = async (turnTime) => {
     const db = getFirestore();
-    const date = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+    const { date } = determineDateAndShift();
     const pedidosDocRef = doc(db, 'PEDIDOS', date);
     const pedidosDocSnap = await getDoc(pedidosDocRef);
 
@@ -160,7 +198,7 @@ const Turno = ({ modalVisible, closeModal }) => {
     setIsProcessing(true);
 
     const db = getFirestore();
-    const date = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+    const { date } = determineDateAndShift();
 
     // Create or update BASE collection document
     const baseDocRef = doc(db, 'BASE', date);
@@ -263,7 +301,7 @@ const generatePDF = async () => {
   setIsProcessing(true);
 
   const db = getFirestore();
-  const date = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+  const { date } = determineDateAndShift();
 
   // Create or update BASE collection document
   const baseDocRef = doc(db, 'BASE', date);
