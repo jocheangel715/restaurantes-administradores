@@ -216,9 +216,9 @@ const Pedido = ({ modalVisible, closeModal }) => {
         }
         // Handle order creation logic here
         const newOrderId = await generateNewOrderId();
-        const subtotal = calculateTotal();
+        const subtotal = parseFloat(calculateTotal().replace(/[$,]/g, '')); // Ensure subtotal is a number
         const valorDomicilio = parseFloat(barrios.find(barrio => barrio.name === client.barrio)?.deliveryPrice) || 0;
-        const total = subtotal + valorDomicilio;
+        const total = subtotal + valorDomicilio; // Sum subtotal and delivery cost
   
         const orderData = {
           idPedido: newOrderId,
@@ -230,9 +230,9 @@ const Pedido = ({ modalVisible, closeModal }) => {
           paymentMethod: paymentMethod,
           status: "PEDIDOTOMADO",
           cart: cart,
-          subtotal: subtotal,
+          subtotal: subtotal, // Save subtotal as a number
           valorDomicilio: valorDomicilio,
-          total: total,
+          total: total, // Save the calculated total
           timestamp: Timestamp.now(),
           pedidotomado: userName, // Add the authenticated user's name
         };
