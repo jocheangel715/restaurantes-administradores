@@ -65,8 +65,14 @@ const Productos = ({ modalVisible, closeModal }) => {
         categoriesSet.add(data.category);
       });
       setProductos(items);
-      setFilteredProductos(items);
       setCategories(['Todas las Categorías', ...Array.from(categoriesSet)]);
+      
+      // Mantener los productos filtrados según la categoría seleccionada
+      if (selectedCategory === 'Todas las Categorías') {
+        setFilteredProductos(items);
+      } else {
+        setFilteredProductos(items.filter(product => product.category === selectedCategory));
+      }
     } catch (error) {
       console.error('Error fetching productos:', error);
     }
@@ -95,6 +101,7 @@ const Productos = ({ modalVisible, closeModal }) => {
       const formattedProducto = {
         ...producto,
         price: producto.price.toString().replace(/[^0-9.]/g, ''), // Ensure price is a string
+        ingredients: producto.ingredients.toUpperCase(), // Save ingredients in uppercase
       };
       await setDoc(doc(db, "MENU", producto.id), formattedProducto);
       toast.success("Producto registrado correctamente");
@@ -120,7 +127,7 @@ const Productos = ({ modalVisible, closeModal }) => {
     try {
       await deleteDoc(doc(db, 'MENU', deleteId));
       toast.success('Producto eliminado correctamente');
-      fetchProductos();
+      await fetchProductos(); // Asegurarse de actualizar los productos
     } catch (error) {
       console.error('Error al eliminar el producto:', error);
       toast.error('Error al eliminar el producto');

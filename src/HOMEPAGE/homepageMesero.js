@@ -4,10 +4,15 @@ import { FaSignOutAlt, FaPlus } from 'react-icons/fa'; // Import React Icons
 import './homepageMesero.css';
 import PedidoMesero from '../MESERO/PedidoMesero'; // Import PedidoMesero component
 import VerPedidos from '../MESERO/VerPedidos'; // Import VerPedidos component
+import { getFirestore, collection, query, where, getDocs, doc, onSnapshot } from 'firebase/firestore';
 
 const HomepageMesero = () => {
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [userId, setUserId] = useState('');
+  const [balance, setBalance] = useState({ EFECTIVO: 0, NEQUI: 0, total: 0 });
   const [pedidoModalVisible, setPedidoModalVisible] = useState(false);
+  const [period, setPeriod] = useState('MORNING'); // Add state for selected period
 
   const determineDateAndShift = () => {
     const now = new Date();
@@ -32,18 +37,51 @@ const HomepageMesero = () => {
     return { date, period };
   };
 
+  const fetchUserData = async (user) => {
+    try {
+      const db = getFirestore();
+      const q = query(collection(db, 'EMPLEADOS'), where('email', '==', user.email));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach(async (docSnapshot) => {
+        const data = docSnapshot.data();
+        setName(data.name);
+        setUserId(data.id);
+        console.log('User ID:', data.id);
+
+        const { date } = determineDateAndShift(); // Use selected period
+        const balanceDocRef = doc(db, 'DOMICILIOS', date);
+
+        onSnapshot(balanceDocRef, (balanceDoc) => {
+          if (balanceDoc.exists()) {
+            const periodData = balanceDoc.data()[data.id] ? balanceDoc.data()[data.id][period] : null; // Fetch balance for selected period
+            const balanceData = periodData && periodData.balance ? periodData.balance : { EFECTIVO: 0, NEQUI: 0 };
+            const EFECTIVO = balanceData.EFECTIVO || 0;
+            const NEQUI = balanceData.NEQUI || 0;
+            const total = EFECTIVO + NEQUI;
+            setBalance({ EFECTIVO, NEQUI, total });
+          } else {
+            console.error('No balance document found');
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error fetching user data: ', error);
+    }
+  };
+
   useEffect(() => {
     const auth = getAuth();
     onAuthStateChanged(auth, (user) => {
       if (user) {
         const emailWithoutAt = user.email.split('@')[0];
         setEmail(emailWithoutAt);
+        fetchUserData(user); // Fetch user data when authenticated
       }
     });
 
-    const { date, period } = determineDateAndShift();
+    const { date } = determineDateAndShift();
     console.log(`Current date: ${date}, Current period: ${period}`);
-  }, []);
+  }, [period]); // Add period to dependency array
 
   const handleLogout = () => {
     const auth = getAuth();
@@ -64,22 +102,30 @@ const HomepageMesero = () => {
     setPedidoModalVisible(false);
   };
 
+  const handlePeriodChange = (e) => {
+    setPeriod(e.target.value); // Update selected period
+  };
+
   return (
-    <div className="parent">
-      <div className="div1">
-        <button className="logout-button-mesero" onClick={handleLogout}>
+    <div className="home-container">
+      <div className="header-container">
+        <button className="logout-button" onClick={handleLogout}>
           <FaSignOutAlt />
         </button>
-        <h1 className="welcome-message-mesero">Bienvenido {email}</h1>
+        <h1 className="welcome-message">Bienvenido {email}</h1>
       </div>
-      <div className="div2">
-        <button className="create-order-button-mesero" onClick={handleCreateOrder}>
+      <div className="balance">
+        <p className="balance">EFECTIVO: ${balance.EFECTIVO}</p>
+        <p className="balance">NEQUI: ${balance.NEQUI}</p>
+        <p className="balance">Total: ${balance.total}</p>
+        <button className="crear-button" onClick={handleCreateOrder}>
           <FaPlus /> Crear Pedido
         </button>
       </div>
-      <div className="div3">
-        <div className="verpedidos-container-unique">
-          <VerPedidos /> {/* Ensure VerPedidos component is rendered inside the container */}
+    
+      <div className="orders">
+        <div>
+          <VerPedidos setParentPeriod={setPeriod} /> {/* Pass setPeriod to VerPedidos */}
         </div>
       </div>
       {pedidoModalVisible && <PedidoMesero modalVisible={pedidoModalVisible} closeModal={closePedidoModal} />}

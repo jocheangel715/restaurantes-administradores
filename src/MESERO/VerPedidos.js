@@ -14,7 +14,7 @@ const formatPrice = (value) => {
   return `$${numberValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 };
 
-const VerPedidos = () => {
+const VerPedidos = ({ setParentPeriod }) => { // Accept setParentPeriod as a prop
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null); // State for selected order
   const [period, setPeriod] = useState('MORNING'); // State for selected period
@@ -62,14 +62,14 @@ const VerPedidos = () => {
     if (!userId) return;
 
     const fetchOrders = () => {
-      const { date, period } = determineDateAndShift();
+      const { date } = determineDateAndShift(); // Use selected period
       const docId = date;
 
       const docRef = doc(db, 'PEDIDOS', docId);
       const unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const userOrders = data[period] || {};
+          const userOrders = data[period] || {}; // Fetch orders for the selected period
           const items = Object.keys(userOrders).filter(key => key !== 'balance').map(key => ({ id: key, ...userOrders[key] }));
           const filteredItems = items.filter(item => item.status !== 'ENTREGADOs' && item.tableNumber); // Filter by status and tableNumber
           filteredItems.sort((a, b) => (b.timestamp && b.timestamp.toDate()) - (a.timestamp && a.timestamp.toDate())); // Sort by timestamp
@@ -90,7 +90,7 @@ const VerPedidos = () => {
     };
 
     fetchOrders();
-  }, [period, userId]);
+  }, [period, userId]); // Add period to dependency array
 
   useEffect(() => {
     const ordersList = ordersListRef.current;
@@ -112,7 +112,9 @@ const VerPedidos = () => {
   };
 
   const handlePeriodChange = (e) => {
-    setPeriod(e.target.value);
+    const newPeriod = e.target.value;
+    setPeriod(newPeriod);
+    setParentPeriod(newPeriod); // Notify parent component of the period change
   };
 
   return (

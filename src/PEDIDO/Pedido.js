@@ -284,7 +284,9 @@ const Pedido = ({ modalVisible, closeModal }) => {
     let lastId = 0;
     if (docSnap.exists()) {
       const data = docSnap.data();
-      const orders = data[period] ? Object.keys(data[period]) : [];
+      const orders = data[period]
+        ? Object.keys(data[period]).filter(orderId => !data[period][orderId].tableNumber) // Filter only non-table orders
+        : [];
       if (orders.length > 0) {
         lastId = Math.max(...orders.map(orderId => parseInt(orderId.split('_')[0], 10)));
       }
@@ -461,7 +463,7 @@ const handleSelectAllIngredients = () => {
 
   const confirmarPedido = () => {
     const pedido = cart.map(product => 
-        `${product.name} - ${product.ingredients.map(ingredient => `Sin ${ingredient}`).join(', ')}`)
+        `${product.name} - ${product.ingredients.map(ingredient => `SIN ${ingredient}`).join(', ')}`)
         .join('\n');
 
     const direccion = `${client.address} - ${client.barrio}`;
@@ -650,7 +652,7 @@ const handleSearchProduct = (product) => {
                               <span>{product.name} - {formatPrice(product.price)}</span>
                               <ul>
                                 {product.ingredients.map((ingredient) => (
-                                  <li key={ingredient}>Sin {ingredient}</li>
+                                  <li key={ingredient}>SIN {ingredient}</li>
                                 ))}
                               </ul>
                             </div>
@@ -674,7 +676,10 @@ const handleSearchProduct = (product) => {
                           </div>
                         )}
                         <div>
-                          <strong>Total a Pagar:</strong> {formatPrice(calculateTotal() + (parseFloat(barrios.find(barrio => barrio.name === client.barrio)?.deliveryPrice) || 0))}
+                          <strong>Total a Pagar:</strong> {formatPrice(
+    parseFloat(calculateTotal().replace(/[$,]/g, '')) + 
+    (parseFloat(barrios.find(barrio => barrio.name === client.barrio)?.deliveryPrice) || 0)
+  )}
                         </div>
                       </div>
                       <div className="form-buttons">
@@ -723,7 +728,7 @@ const handleSearchProduct = (product) => {
       <span>{product.name} - {formatPrice(product.price)}</span>
       <ul>
         {product.ingredients.map((ingredient) => (
-          <li key={ingredient}>Sin {ingredient}</li>
+          <li key={ingredient}>SIN {ingredient}</li>
         ))}
       </ul>
     </div>
@@ -784,7 +789,7 @@ const handleSearchProduct = (product) => {
                   checked={selectedIngredients.includes(ingredient)} // Show only selected ingredients
                   onChange={() => handleIngredientChange(ingredient)}
                 />
-                Sin {ingredient}
+                SIN {ingredient}
               </label>
             </div>
           ))}

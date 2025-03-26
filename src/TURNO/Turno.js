@@ -26,7 +26,7 @@ const Turno = ({ modalVisible, closeModal }) => {
       const querySnapshot = await getDocs(collection(db, 'EMPLEADOS'));
       const persons = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(person => person.role === 'DOMICILIARIO');
+        .filter(person => person.role === 'DOMICILIARIO' || person.role === 'MESERO'); // Include MESERO role
       setDeliveryPersons(persons);
     };
 
@@ -378,13 +378,13 @@ const generatePDF = async () => {
               {deliveryPersons.filter(person => !selectedDeliveryPersons.some(selected => selected.id === person.id)).length > 0 && (
                 <>
                   <label>
-                    Domiciliario:
+                    Domiciliario/Mesero:
                     <select value={deliveryPerson} onChange={(e) => setDeliveryPerson(e.target.value)}>
                       <option value="">Seleccione</option>
                       {deliveryPersons
                         .filter(person => !selectedDeliveryPersons.some(selected => selected.id === person.id))
                         .map(person => (
-                          <option key={person.id} value={person.id}>{person.name}</option>
+                          <option key={person.id} value={person.id}>{person.name} ({person.role})</option> // Show role in dropdown
                         ))}
                     </select>
                   </label>

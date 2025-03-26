@@ -125,7 +125,9 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
     let lastId = 0;
     if (docSnap.exists()) {
       const data = docSnap.data();
-      const orders = data[period] ? Object.keys(data[period]) : [];
+      const orders = data[period]
+        ? Object.keys(data[period]).filter(orderId => data[period][orderId].tableNumber) // Filter only table orders
+        : [];
       if (orders.length > 0) {
         lastId = Math.max(...orders.map(orderId => parseInt(orderId.split('_')[0], 10)));
       }
@@ -325,9 +327,10 @@ ${pedido}
                   </div>
                 </div>
                 <div className="form-buttons">
-                  <button type="button" className="add-products-button" onClick={() => setIsAdding(true)}><FaCartPlus /> Añadir Productos</button>
-                  <button type="button" className="confirmar-pedido-button" onClick={confirmarPedido}><FaCopy /> Confirmar Pedido</button>
-                  <button type="submit" className="realizar-pedido-button" disabled={isSubmitting}>
+                  <button type="button" className="pedidomesero-add-products-button" onClick={() => setIsAdding(true)} style={{ width: '100%' }}>
+                    <FaCartPlus /> Añadir Productos
+                  </button>
+                  <button type="submit" className="pedidomesero-realizar-pedido-button" disabled={isSubmitting} style={{ width: '100%' }}>
                     {isSubmitting ? 'Procesando...' : <><FaSave /> Realizar Pedido</>}
                   </button>
                 </div>

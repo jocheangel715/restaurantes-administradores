@@ -456,6 +456,34 @@ button:hover {
   background-color: #e0a800; /* Amarillo más oscuro */
 }
 
+.pedidomesero-add-products-button {
+  background-color: #ffc107; /* Amarillo */
+  color: black;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pedidomesero-add-products-button:hover {
+  background-color: #e0a800; /* Amarillo más oscuro */
+}
+
+.pedidomesero-realizar-pedido-button {
+  background-color: #007bff; /* Azul */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pedidomesero-realizar-pedido-button:hover {
+  background-color: #0056b3; /* Azul más oscuro */
+}
+
 .pedido-summary-container {
   margin-top: 20px;
   padding: 10px;

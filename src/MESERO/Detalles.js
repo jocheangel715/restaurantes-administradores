@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { doc, getDoc, collection, getDocs, query, orderBy, setDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy, setDoc, where } from 'firebase/firestore'; // Add 'where' to the imports
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Detalles.css';
 import { FaCartPlus, FaSave } from 'react-icons/fa'; // Import icons
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const Detalles = ({ order, closeModal }) => {
   const [loading, setLoading] = useState(false);
@@ -15,9 +16,32 @@ const Detalles = ({ order, closeModal }) => {
   const [selectedCategory, setSelectedCategory] = useState('Todas las Categorías');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [incorrectPayment, setIncorrectPayment] = useState(false);
+  const [partialPayment, setPartialPayment] = useState(false);
+  const [partialAmount, setPartialAmount] = useState('');
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
     fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const auth = getAuth();
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const q = query(collection(db, 'EMPLEADOS'), where('email', '==', user.email));
+          const querySnapshot = await getDocs(q);
+          querySnapshot.forEach((docSnapshot) => {
+            const data = docSnapshot.data();
+            setUserId(data.id);
+          });
+        } catch (error) {
+          console.error('Error obteniendo datos del usuario:', error);
+        }
+      }
+    });
   }, []);
 
   const fetchProducts = async () => {
@@ -73,16 +97,59 @@ const Detalles = ({ order, closeModal }) => {
 
       if (orderSnapshot.exists()) {
         const data = orderSnapshot.data();
-        console.log('Order data:', data); // Log order data
         let orderFound = false;
 
         if (data[period] && data[period][order.id]) {
           data[period][order.id].status = status;
-          await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
+          if (incorrectPayment) {
+            data[period][order.id].paymentMethod = paymentMethod;
+          }
           orderFound = true;
         }
 
         if (orderFound) {
+          const paymentMethodToUse = incorrectPayment ? paymentMethod : order.paymentMethod;
+          const balance = data[period].balance || { EFECTIVO: 0, NEQUI: 0 };
+
+          if (partialPayment && partialAmount) {
+            const partialValue = parseFloat(partialAmount.replace(/[$,]/g, '')) || 0;
+            const remainingValue = order.total - partialValue;
+
+            balance[paymentMethodToUse] = (Number(balance[paymentMethodToUse]) || 0) + partialValue;
+            const otherMethod = paymentMethodToUse === 'EFECTIVO' ? 'NEQUI' : 'EFECTIVO';
+            balance[otherMethod] = (Number(balance[otherMethod]) || 0) + remainingValue;
+          } else {
+            balance[paymentMethodToUse] = (Number(balance[paymentMethodToUse]) || 0) + order.total;
+          }
+
+          await setDoc(orderDoc, { [period]: { ...data[period], balance } }, { merge: true });
+
+          // Update balance in DOMICILIOS collection
+          const domiciliosDoc = doc(db, 'DOMICILIOS', docId);
+          const domiciliosSnapshot = await getDoc(domiciliosDoc);
+          const domiciliosData = domiciliosSnapshot.exists() ? domiciliosSnapshot.data() : {};
+
+          if (!domiciliosData[userId]) {
+            domiciliosData[userId] = {};
+          }
+          if (!domiciliosData[userId][period]) {
+            domiciliosData[userId][period] = { balance: { EFECTIVO: 0, NEQUI: 0 } };
+          }
+
+          const meseroBalance = domiciliosData[userId][period].balance;
+          if (partialPayment && partialAmount) {
+            const partialValue = parseFloat(partialAmount.replace(/[$,]/g, '')) || 0;
+            const remainingValue = order.total - partialValue;
+
+            meseroBalance[paymentMethodToUse] = (Number(meseroBalance[paymentMethodToUse]) || 0) + partialValue;
+            const otherMethod = paymentMethodToUse === 'EFECTIVO' ? 'NEQUI' : 'EFECTIVO';
+            meseroBalance[otherMethod] = (Number(meseroBalance[otherMethod]) || 0) + remainingValue;
+          } else {
+            meseroBalance[paymentMethodToUse] = (Number(meseroBalance[paymentMethodToUse]) || 0) + order.total;
+          }
+
+          await setDoc(domiciliosDoc, { [userId]: { [period]: { balance: meseroBalance } } }, { merge: true });
+
           toast.success(`Pedido actualizado a ${status}`);
           closeModal();
         } else {
@@ -193,6 +260,13 @@ const Detalles = ({ order, closeModal }) => {
     }
   };
 
+  const formatPrice = (value) => {
+    if (value === null || value === undefined || value === '') return '0';
+    const numberValue = parseFloat(value.toString().replace(/[$,]/g, ''));
+    if (isNaN(numberValue)) return '0';
+    return `$${numberValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  };
+
   return (
     <div className="detalles-container">
   <ToastContainer />
@@ -202,6 +276,43 @@ const Detalles = ({ order, closeModal }) => {
       <span className="detalles-close" onClick={closeModal}>&times;</span>
       <h2>Detalles del Pedido</h2>
       <div className="detalles-content">
+        <h3>Total: {formatPrice(order.total)}</h3>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={incorrectPayment}
+            onChange={() => setIncorrectPayment(!incorrectPayment)}
+          />
+          ¿El pago no fue por el método correcto?
+        </label>
+        {incorrectPayment && (
+          <select
+            className="period-select-dropdown"
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+          >
+            <option value="">Seleccionar método de pago</option>
+            <option value="NEQUI">NEQUI</option>
+            <option value="EFECTIVO">EFECTIVO</option>
+          </select>
+        )}
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={partialPayment}
+            onChange={() => setPartialPayment(!partialPayment)}
+          />
+          ¿El pago fue parcial?
+        </label>
+        {partialPayment && (
+          <input
+            type="text"
+            className="partial-payment-input"
+            placeholder="Ingrese el monto recibido"
+            value={partialAmount}
+            onChange={(e) => setPartialAmount(formatPrice(e.target.value))}
+          />
+        )}
         <h3>Productos:</h3>
         {order.cart.map((product, index) => (
           <div key={index} className="product-item">
