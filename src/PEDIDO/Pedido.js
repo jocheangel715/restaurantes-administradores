@@ -157,16 +157,19 @@ const Pedido = ({ modalVisible, closeModal }) => {
   const handleSearchClient = async () => {
     setLoading(true);
     try {
-        // Normalizar el número ingresado en los tres formatos posibles
-        let rawPhone = phone.replace(/\s+/g, ''); // Eliminar espacios
+        // Normalizar el número ingresado eliminando espacios
+        let rawPhone = phone.replace(/\s+/g, '');
+
+        // Asegurar que el número no tenga doble prefijo +57
         if (rawPhone.startsWith('+57')) {
-            rawPhone = rawPhone.replace('+57', ''); // Remover prefijo si ya está
+            rawPhone = rawPhone.replace(/^(\+57)/, ''); // Remover solo el primer +57 si existe
         }
 
+        // Construcción de variantes del número
         const normalizedPhones = [
-            rawPhone, // Formato 1: 3054715845
-            `+57${rawPhone}`, // Formato 2: +573054715845
-            `+57 ${rawPhone}` // Formato 3: +57 3054715845
+            rawPhone,                  // 3028470281
+            `+57${rawPhone}`,          // +573028470281
+            `+57 ${rawPhone.slice(0, 3)} ${rawPhone.slice(3)}` // +57 302 8470281
         ];
 
         // Consultar la base de datos con los tres formatos
@@ -176,21 +179,22 @@ const Pedido = ({ modalVisible, closeModal }) => {
         if (!querySnapshot.empty) {
             const clientData = querySnapshot.docs[0].data();
             setClient(clientData);
-            setCart([]); // Clear the cart
-            setPaymentMethod(''); // Reset payment method
-            setBillAmount(''); // Reset bill amount
+            setCart([]); // Limpiar carrito
+            setPaymentMethod(''); // Restablecer método de pago
+            setBillAmount(''); // Restablecer monto de factura
             setError('');
         } else {
-            setClient({ id: '', name: '', phone, address: '', barrio: '' });
-            setError('Cliente no encontrado. Por favor, complete los datos para registrar un nuevo cliente.');
+            setClient({ id: '', name: '', phone: rawPhone, address: '', barrio: '' });
+            setError('Cliente no encontrado. Complete los datos para registrar un nuevo cliente.');
         }
     } catch (error) {
         console.error('Error buscando cliente:', error);
-        setError('Error buscando cliente');
+        setError('Error al buscar cliente. Intente nuevamente.');
     } finally {
         setLoading(false);
     }
 };
+
 
 
   const handleInputChange = (e) => {

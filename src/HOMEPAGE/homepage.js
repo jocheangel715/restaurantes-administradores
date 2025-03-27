@@ -12,6 +12,7 @@ import Pedido from '../PEDIDO/Pedido';
 import VerPedidos from '../VERPEDIDOS/VerPedidosprincipal'; // Import VerPedidos component
 import Turno from '../TURNO/Turno'; // Import Turno component
 import PedidoMesero from '../MESERO/PedidoMesero'; // Import PedidoMesero component
+import ExpensesForm from '../EGRESOS/ExpensesForm'; // Import ExpensesForm component
 
 const Homepage = () => {
   const [inventoryModalVisible, setInventoryModalVisible] = useState(false);
@@ -22,6 +23,7 @@ const Homepage = () => {
   const [pedidoModalVisible, setPedidoModalVisible] = useState(false);
   const [turnoModalVisible, setTurnoModalVisible] = useState(false); // Add state for Turno modal visibility
   const [pedidoMeseroModalVisible, setPedidoMeseroModalVisible] = useState(false); // Add state for PedidoMesero modal visibility
+  const [expensesModalVisible, setExpensesModalVisible] = useState(false); // State for expenses modal
   const [userEmail, setUserEmail] = useState('');
 
   const determineDateAndShift = () => {
@@ -50,6 +52,10 @@ const Homepage = () => {
     setPedidoMeseroModalVisible(true);
   };
 
+  const handleExpensesClick = () => {
+    setExpensesModalVisible(true);
+  };
+
   useEffect(() => {
     const logoutButton = document.getElementById('logout-button');
     const inventoryButton = document.getElementById('inventory-button');
@@ -60,6 +66,7 @@ const Homepage = () => {
     const pedidoButton = document.getElementById('pedido-button');
     const turnoButton = document.getElementById('turno-button'); // Get Turno button element
     const mesasButton = document.getElementById('mesas-button'); // Get Mesas button element
+    const expensesButton = document.getElementById('expenses-button'); // Get Expenses button element
     const auth = getAuth(app);
 
     const handleLogout = () => {
@@ -108,6 +115,7 @@ const Homepage = () => {
     pedidoButton.addEventListener('click', handlePedidoClick);
     turnoButton.addEventListener('click', handleTurnoClick);
     mesasButton.addEventListener('click', handlePedidoMeseroClick);
+    expensesButton.addEventListener('click', handleExpensesClick);
 
     // Get the authenticated user's email
     const user = auth.currentUser;
@@ -126,6 +134,7 @@ const Homepage = () => {
       pedidoButton.removeEventListener('click', handlePedidoClick);
       turnoButton.removeEventListener('click', handleTurnoClick);
       mesasButton.removeEventListener('click', handlePedidoMeseroClick);
+      expensesButton.removeEventListener('click', handleExpensesClick);
     };
   }, []);
 
@@ -147,13 +156,15 @@ const Homepage = () => {
         document.title = 'Turno';
       } else if (pedidoMeseroModalVisible) {
         document.title = 'Mesas';
+      } else if (expensesModalVisible) {
+        document.title = 'Egresos';
       } else {
         document.title = 'Homepage';
       }
     };
 
     updateTitle();
-  }, [inventoryModalVisible, clientsModalVisible, barriosModalVisible, proveedoresModalVisible, productosModalVisible, pedidoModalVisible, turnoModalVisible, pedidoMeseroModalVisible]);
+  }, [inventoryModalVisible, clientsModalVisible, barriosModalVisible, proveedoresModalVisible, productosModalVisible, pedidoModalVisible, turnoModalVisible, pedidoMeseroModalVisible, expensesModalVisible]);
 
   useEffect(() => {
     const { date, period } = determineDateAndShift();
@@ -168,63 +179,67 @@ const Homepage = () => {
   const closePedidoModal = () => setPedidoModalVisible(false);
   const closeTurnoModal = () => setTurnoModalVisible(false);
   const closePedidoMeseroModal = () => setPedidoMeseroModalVisible(false);
+  const closeExpensesModal = () => setExpensesModalVisible(false);
 
   return (
-    <>
+    <div className="dashboard">
       <button id="logout-button" className="classname-logout-button">
         <FaSignOutAlt />
       </button>
-      <div className="dashboard">
-        <div className="welcome-container">
-          <h1 className="classname-welcome-message">Welcome, {userEmail}</h1>
-        </div>
-        {inventoryModalVisible && <Inventory modalVisible={inventoryModalVisible} closeModal={closeInventoryModal} />}
-        {clientsModalVisible && <Clientes modalVisible={clientsModalVisible} closeModal={closeClientsModal} />}
-        {barriosModalVisible && <Barrios modalVisible={barriosModalVisible} closeModal={closeBarriosModal} />}
-        {proveedoresModalVisible && <Proveedores modalVisible={proveedoresModalVisible} closeModal={closeProveedoresModal} />}
-        {productosModalVisible && <Productos modalVisible={productosModalVisible} closeModal={closeProductosModal} />}
-        {pedidoModalVisible && <Pedido modalVisible={pedidoModalVisible} closeModal={closePedidoModal} />}
-        {turnoModalVisible && <Turno modalVisible={turnoModalVisible} closeModal={closeTurnoModal} />}
-        {pedidoMeseroModalVisible && <PedidoMesero modalVisible={pedidoMeseroModalVisible} closeModal={closePedidoMeseroModal} />}
-        <div className="buttons-container">
-          <button id="inventory-button" className="classname-inventory-button">
-            <FaBoxOpen />
-            <span>Inventario</span>
-          </button>
-          <button id="clients-button" className="classname-clients-button">
-            <FaUsers />
-            <span>Empleados</span>
-          </button>
-          <button id="barrios-button" className="classname-barrios-button">
-            <FaMapMarkerAlt />
-            <span>Barrios</span>
-          </button>
-          <button id="proveedores-button" className="classname-proveedores-button">
-            <FaTruck />
-            <span>Proveedores</span>
-          </button>
-          <button id="productos-button" className="classname-productos-button">
-            <FaUtensils />
-            <span>Productos</span>
-          </button>
-          <button id="pedido-button" className="classname-pedido-button">
-            <FaClipboardList />
-            <span>Pedido</span>
-          </button>
-          <button id="turno-button" className="classname-turno-button">
-            <FaClock />
-            <span>Turno</span>
-          </button>
-          <button id="mesas-button" className="classname-mesas-button" onClick={handlePedidoMeseroClick}>
-          <FaClipboardList />
-            <span>Mesas</span>
-          </button>
-        </div>
-        <div className="verpedidos-container-wrapper">
-          <VerPedidos /> {/* Display VerPedidos component */}
-        </div>
+      <div className="welcome-container">
+        <h1 className="classname-welcome-message">Welcome, {userEmail}</h1>
       </div>
-    </>
+      {inventoryModalVisible && <Inventory modalVisible={inventoryModalVisible} closeModal={closeInventoryModal} />}
+      {clientsModalVisible && <Clientes modalVisible={clientsModalVisible} closeModal={closeClientsModal} />}
+      {barriosModalVisible && <Barrios modalVisible={barriosModalVisible} closeModal={closeBarriosModal} />}
+      {proveedoresModalVisible && <Proveedores modalVisible={proveedoresModalVisible} closeModal={closeProveedoresModal} />}
+      {productosModalVisible && <Productos modalVisible={productosModalVisible} closeModal={closeProductosModal} />}
+      {pedidoModalVisible && <Pedido modalVisible={pedidoModalVisible} closeModal={closePedidoModal} />}
+      {turnoModalVisible && <Turno modalVisible={turnoModalVisible} closeModal={closeTurnoModal} />}
+      {pedidoMeseroModalVisible && <PedidoMesero modalVisible={pedidoMeseroModalVisible} closeModal={closePedidoMeseroModal} />}
+      {expensesModalVisible && <ExpensesForm modalVisible={expensesModalVisible} closeModal={closeExpensesModal} />}
+      <div className="buttons-container">
+        <button id="inventory-button" className="classname-inventory-button">
+          <FaBoxOpen />
+          <span>Inventario</span>
+        </button>
+        <button id="clients-button" className="classname-clients-button">
+          <FaUsers />
+          <span>Empleados</span>
+        </button>
+        <button id="barrios-button" className="classname-barrios-button">
+          <FaMapMarkerAlt />
+          <span>Barrios</span>
+        </button>
+        <button id="proveedores-button" className="classname-proveedores-button">
+          <FaTruck />
+          <span>Proveedores</span>
+        </button>
+        <button id="productos-button" className="classname-productos-button">
+          <FaUtensils />
+          <span>Productos</span>
+        </button>
+        <button id="pedido-button" className="classname-pedido-button">
+          <FaClipboardList />
+          <span>Pedido</span>
+        </button>
+        <button id="turno-button" className="classname-turno-button">
+          <FaClock />
+          <span>Turno</span>
+        </button>
+        <button id="mesas-button" className="classname-mesas-button" onClick={handlePedidoMeseroClick}>
+          <FaClipboardList />
+          <span>Mesas</span>
+        </button>
+        <button id="expenses-button" className="classname-expenses-button" onClick={handleExpensesClick}>
+          <FaClipboardList />
+          <span>Egresos</span>
+        </button>
+      </div>
+      <div className="verpedidos-container-wrapper">
+        <VerPedidos /> {/* Display VerPedidos component */}
+      </div>
+    </div>
   );
 };
 

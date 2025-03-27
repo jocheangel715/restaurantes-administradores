@@ -19,6 +19,7 @@ const Turno = ({ modalVisible, closeModal }) => {
   const [turnTime, setTurnTime] = useState('');
   const [balances, setBalances] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [expenses, setExpenses] = useState([]); // State to store expenses
 
   useEffect(() => {
     const fetchDeliveryPersons = async () => {
@@ -290,8 +291,8 @@ const pdfContent = (pdfDoc, orderData) => {
 };
 
 const generatePDF = async () => {
-  if (!turnType || !turnTime || !nequiValueEnd || !cashValueEnd) { // Removed nequiValueBase and cashValueBase from validation
-    alert('Todos los campos son obligatorios para generar el PDF');
+  if (!turnType || !turnTime) {
+    alert('Debe seleccionar el tipo de turno y el turno para generar el PDF');
     return;
   }
 
@@ -299,7 +300,94 @@ const generatePDF = async () => {
 
   const pdfDoc = new jsPDF();
   const orderData = await fetchOrderData(turnTime);
-  pdfContent(pdfDoc, orderData);
+  const pageWidth = pdfDoc.internal.pageSize.getWidth();
+
+  // Título principal
+  pdfDoc.setFontSize(18);
+  pdfDoc.text(`Informe de Cierre - ${new Date().toLocaleDateString('es-ES')}`, pageWidth / 2, 20, { align: 'center' });
+  pdfDoc.setFontSize(14);
+  pdfDoc.text(`Turno: ${turnType} | Hora: ${turnTime}`, pageWidth / 2, 28, { align: 'center' });
+
+  // Tabla de Pedidos
+  pdfDoc.setFontSize(16);
+  pdfDoc.text('Resumen de Pedidos', 14, 40);
+
+  autoTable(pdfDoc, {
+    startY: 45,
+    head: [['Descripción', 'Cantidad']],
+    body: [
+      ['Pedidos a domicilio', orderData.domicilioOrders],
+      ['Pedidos en mesa', orderData.mesaOrders],
+      ['Pedidos para llevar', orderData.llevarOrders],
+      ['Total de pedidos', orderData.totalOrders],
+    ],
+    theme: 'striped',
+    styles: { fontSize: 12, cellPadding: 3 },
+    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+  });
+
+  const previousY = pdfDoc.lastAutoTable.finalY + 10;
+
+  // Tabla de Productos Vendidos
+  pdfDoc.setFontSize(16);
+  pdfDoc.text('Productos Vendidos', 14, previousY);
+
+  autoTable(pdfDoc, {
+    startY: previousY + 5,
+    head: [['Producto', 'Cantidad']],
+    body: Object.values(orderData.productCounts).map(({ name, count }) => [name, count]),
+    theme: 'striped',
+    styles: { fontSize: 12, cellPadding: 3 },
+    headStyles: { fillColor: [46, 204, 113], textColor: 255, fontStyle: 'bold' },
+  });
+
+  const expensesY = pdfDoc.lastAutoTable.finalY + 10;
+
+  // Tabla de Egresos
+  pdfDoc.setFontSize(16);
+  pdfDoc.text('Egresos del Día', 14, expensesY);
+
+  autoTable(pdfDoc, {
+    startY: expensesY + 5,
+    head: [['Concepto', 'Monto']],
+    body: expenses.map((expense) => [expense.concept, formatPrice(expense.amount)]),
+    theme: 'striped',
+    styles: { fontSize: 12, cellPadding: 3 },
+    headStyles: { fillColor: [231, 76, 60], textColor: 255, fontStyle: 'bold' },
+  });
+
+  const balancesY = pdfDoc.lastAutoTable.finalY + 10;
+
+  // Tabla de Balances de Domiciliarios y Meseros
+  pdfDoc.setFontSize(16);
+  pdfDoc.text('Balances de Domiciliarios y Meseros', 14, balancesY);
+
+  const balanceRows = selectedDeliveryPersons.map((person) => {
+    const name = deliveryPersons.find((p) => p.id === person.id)?.name || 'Desconocido';
+    const role = deliveryPersons.find((p) => p.id === person.id)?.role || 'Desconocido';
+    const efectivo = parseFloat(person.efectivo || 0);
+    const nequi = parseFloat(person.nequi || 0);
+    const total = efectivo + nequi;
+    return [name, role, formatPrice(efectivo), formatPrice(nequi), formatPrice(total)];
+  });
+
+  const totalEfectivo = balanceRows.reduce((sum, row) => sum + parseFloat(row[2].replace(/[$,]/g, '')), 0);
+  const totalNequi = balanceRows.reduce((sum, row) => sum + parseFloat(row[3].replace(/[$,]/g, '')), 0);
+  const grandTotal = totalEfectivo + totalNequi;
+
+  autoTable(pdfDoc, {
+    startY: balancesY + 5,
+    head: [['Nombre', 'Rol', 'Efectivo', 'Nequi', 'Total']],
+    body: [
+      ...balanceRows,
+      ['TOTAL', '', formatPrice(totalEfectivo), formatPrice(totalNequi), formatPrice(grandTotal)]
+    ],
+    theme: 'striped',
+    styles: { fontSize: 12, cellPadding: 3 },
+    headStyles: { fillColor: [52, 152, 219], textColor: 255, fontStyle: 'bold' },
+  });
+
+  // Guardar PDF con nombre personalizado
   const pdfName = `CIERRE_INFORME_CAJA_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`;
   pdfDoc.save(pdfName);
 
@@ -307,7 +395,36 @@ const generatePDF = async () => {
 };
 
 
+const fetchExpenses = async () => {
+  const db = getFirestore();
+  const { date } = determineDateAndShift(); // Get current date
+  const docRef = doc(db, 'EGRESOS', date);
 
+  try {
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const expensesList = Object.entries(data).flatMap(([period, entries]) =>
+        Object.entries(entries).map(([id, expense]) => ({
+          id,
+          period,
+          ...expense,
+        }))
+      );
+      setExpenses(expensesList);
+    } else {
+      setExpenses([]); // No expenses for the day
+    }
+  } catch (error) {
+    console.error('Error fetching expenses:', error);
+  }
+};
+
+useEffect(() => {
+  if (modalVisible) {
+    fetchExpenses(); // Fetch expenses when the modal is visible
+  }
+}, [modalVisible]);
 
   if (!modalVisible) return null;
 
@@ -510,6 +627,30 @@ const generatePDF = async () => {
                       />
                     </td>
                   </tr>
+                </tbody>
+              </table>
+              <h3>EGRESOS DEL DÍA</h3>
+              <table className="turno-table">
+                <thead>
+                  <tr>
+                    <th>Concepto</th>
+                    <th>Monto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expenses.map((expense) => (
+                    <tr key={expense.id}>
+                      <td>{expense.concept}</td>
+                      <td>{formatPrice(expense.amount)}</td>
+                    </tr>
+                  ))}
+                  {expenses.length === 0 && (
+                    <tr>
+                      <td colSpan="2" style={{ textAlign: 'center' }}>
+                        No hay egresos registrados para el día.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
               <button onClick={handleSubmit} disabled={isProcessing}>
