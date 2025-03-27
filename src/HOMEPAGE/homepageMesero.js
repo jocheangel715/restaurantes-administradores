@@ -106,6 +106,13 @@ const HomepageMesero = () => {
     setPeriod(e.target.value); // Update selected period
   };
 
+  const formatPrice = (value) => {
+    if (value === null || value === undefined || value === '') return '0';
+    const stringValue = value.toString();
+    const numberValue = parseFloat(stringValue.replace(/[$,]/g, ''));
+    return `$${numberValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  };
+
   return (
     <div className="home-container">
       <div className="header-container">
@@ -115,9 +122,9 @@ const HomepageMesero = () => {
         <h1 className="welcome-message">Bienvenido {email}</h1>
       </div>
       <div className="balance">
-        <p className="balance">EFECTIVO: ${balance.EFECTIVO}</p>
-        <p className="balance">NEQUI: ${balance.NEQUI}</p>
-        <p className="balance">Total: ${balance.total}</p>
+        <p className="balance">EFECTIVO: {formatPrice(balance.EFECTIVO)}</p>
+        <p className="balance">NEQUI: {formatPrice(balance.NEQUI)}</p>
+        <p className="balance">Total: {formatPrice(balance.total)}</p>
         <button className="crear-button" onClick={handleCreateOrder}>
           <FaPlus /> Crear Pedido
         </button>

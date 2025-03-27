@@ -97,34 +97,20 @@ const Detalles = ({ order, closeModal }) => {
 
       if (orderSnapshot.exists()) {
         const data = orderSnapshot.data();
-        let orderFound = false;
 
         if (data[period] && data[period][order.id]) {
+          // Actualizar el estado del pedido
           data[period][order.id].status = status;
+
+          // Actualizar el método de pago si es incorrecto
           if (incorrectPayment) {
             data[period][order.id].paymentMethod = paymentMethod;
           }
-          orderFound = true;
-        }
 
-        if (orderFound) {
-          const paymentMethodToUse = incorrectPayment ? paymentMethod : order.paymentMethod;
-          const balance = data[period].balance || { EFECTIVO: 0, NEQUI: 0 };
+          // Guardar los cambios en Firestore
+          await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
 
-          if (partialPayment && partialAmount) {
-            const partialValue = parseFloat(partialAmount.replace(/[$,]/g, '')) || 0;
-            const remainingValue = order.total - partialValue;
-
-            balance[paymentMethodToUse] = (Number(balance[paymentMethodToUse]) || 0) + partialValue;
-            const otherMethod = paymentMethodToUse === 'EFECTIVO' ? 'NEQUI' : 'EFECTIVO';
-            balance[otherMethod] = (Number(balance[otherMethod]) || 0) + remainingValue;
-          } else {
-            balance[paymentMethodToUse] = (Number(balance[paymentMethodToUse]) || 0) + order.total;
-          }
-
-          await setDoc(orderDoc, { [period]: { ...data[period], balance } }, { merge: true });
-
-          // Update balance in DOMICILIOS collection
+          // Actualizar el balance del domiciliario
           const domiciliosDoc = doc(db, 'DOMICILIOS', docId);
           const domiciliosSnapshot = await getDoc(domiciliosDoc);
           const domiciliosData = domiciliosSnapshot.exists() ? domiciliosSnapshot.data() : {};
@@ -137,6 +123,8 @@ const Detalles = ({ order, closeModal }) => {
           }
 
           const meseroBalance = domiciliosData[userId][period].balance;
+          const paymentMethodToUse = incorrectPayment ? paymentMethod : order.paymentMethod;
+
           if (partialPayment && partialAmount) {
             const partialValue = parseFloat(partialAmount.replace(/[$,]/g, '')) || 0;
             const remainingValue = order.total - partialValue;
@@ -150,10 +138,11 @@ const Detalles = ({ order, closeModal }) => {
 
           await setDoc(domiciliosDoc, { [userId]: { [period]: { balance: meseroBalance } } }, { merge: true });
 
+          // Mostrar mensaje de éxito
           toast.success(`Pedido actualizado a ${status}`);
           closeModal();
         } else {
-          toast.error('Pedido no encontrado');
+          toast.error('Pedido no encontrado en el documento');
         }
       } else {
         toast.error('Documento de pedidos no encontrado');
@@ -174,6 +163,10 @@ const Detalles = ({ order, closeModal }) => {
 
   const handleEmpacado = () => {
     if (!loading) {
+      if (!paymentMethod) {
+        toast.error('Debe seleccionar un método de pago antes de continuar.');
+        return;
+      }
       updateOrderStatus('ENTREGADO');
     }
   };

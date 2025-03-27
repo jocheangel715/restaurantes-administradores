@@ -190,7 +190,7 @@ const Turno = ({ modalVisible, closeModal }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!turnType || !nequiValueBase || !cashValueBase || !turnTime) {
+    if (!turnType || !turnTime) { // Removed nequiValueBase and cashValueBase from validation
       alert('Todos los campos son obligatorios');
       return;
     }
@@ -287,33 +287,15 @@ const pdfContent = (pdfDoc, orderData) => {
     head: [['Producto', 'Cantidad']],
     body: Object.values(orderData.productCounts).map(({ name, count }) => [name, count])
   });
-
-  pdfDoc.addPage();
-  pdfDoc.text('Siguiente tabla', 14, 16);
 };
 
 const generatePDF = async () => {
-  if (!turnType || !nequiValueBase || !cashValueBase || !turnTime || !nequiValueEnd || !cashValueEnd) {
-    alert('Todos los campos son obligatorios');
+  if (!turnType || !turnTime || !nequiValueEnd || !cashValueEnd) { // Removed nequiValueBase and cashValueBase from validation
+    alert('Todos los campos son obligatorios para generar el PDF');
     return;
   }
 
   setIsProcessing(true);
-
-  const db = getFirestore();
-  const { date } = determineDateAndShift();
-
-  // Create or update BASE collection document
-  const baseDocRef = doc(db, 'BASE', date);
-  const baseData = {
-    [turnTime]: {
-      BASENEQUIINICIO: parseFloat(nequiValueBase.replace(/[$,]/g, '')) || 0,
-      BASEEFECTIVOINICIO: parseFloat(cashValueBase.replace(/[$,]/g, '')) || 0,
-      BASENEQUIFIN: parseFloat(nequiValueEnd.replace(/[$,]/g, '')) || 0,
-      BASEEFECTIVOFIN: parseFloat(cashValueEnd.replace(/[$,]/g, '')) || 0
-    }
-  };
-  await setDoc(baseDocRef, baseData, { merge: true });
 
   const pdfDoc = new jsPDF();
   const orderData = await fetchOrderData(turnTime);
@@ -361,7 +343,6 @@ const generatePDF = async () => {
                   value={nequiValueBase}
                   onChange={(e) => setNequiValueBase(e.target.value)}
                   onBlur={(e) => setNequiValueBase(formatPrice(e.target.value))}
-                  required
                 />
               </label>
               <label>
@@ -372,7 +353,6 @@ const generatePDF = async () => {
                   value={cashValueBase}
                   onChange={(e) => setCashValueBase(e.target.value)}
                   onBlur={(e) => setCashValueBase(formatPrice(e.target.value))}
-                  required
                 />
               </label>
               {deliveryPersons.filter(person => !selectedDeliveryPersons.some(selected => selected.id === person.id)).length > 0 && (
@@ -532,10 +512,15 @@ const generatePDF = async () => {
                   </tr>
                 </tbody>
               </table>
+              <button onClick={handleSubmit} disabled={isProcessing}>
+                {isProcessing ? 'Procesando...' : 'Guardar'}
+              </button>
+              <button onClick={generatePDF} disabled={isProcessing}>
+                {isProcessing ? 'Procesando...' : 'Imprimir'}
+              </button>
             </>
           )}
         </form>
-        <button onClick={generatePDF} disabled={isProcessing}>Imprimir</button>
         <button onClick={closeModal} disabled={isProcessing}>Cerrar</button>
         {balances.length > 0 && (
           <div>

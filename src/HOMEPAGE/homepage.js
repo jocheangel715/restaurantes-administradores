@@ -9,8 +9,9 @@ import Barrios from '../BARRIOS/Barrios';
 import Proveedores from '../PROVEEDORES/Proveedores';
 import Productos from '../PRODUCTOS/Productos';
 import Pedido from '../PEDIDO/Pedido';
-import VerPedidos from '../VERPEDIDOS/VerPedidos'; // Import VerPedidos component
+import VerPedidos from '../VERPEDIDOS/VerPedidosprincipal'; // Import VerPedidos component
 import Turno from '../TURNO/Turno'; // Import Turno component
+import PedidoMesero from '../MESERO/PedidoMesero'; // Import PedidoMesero component
 
 const Homepage = () => {
   const [inventoryModalVisible, setInventoryModalVisible] = useState(false);
@@ -20,6 +21,7 @@ const Homepage = () => {
   const [productosModalVisible, setProductosModalVisible] = useState(false);
   const [pedidoModalVisible, setPedidoModalVisible] = useState(false);
   const [turnoModalVisible, setTurnoModalVisible] = useState(false); // Add state for Turno modal visibility
+  const [pedidoMeseroModalVisible, setPedidoMeseroModalVisible] = useState(false); // Add state for PedidoMesero modal visibility
   const [userEmail, setUserEmail] = useState('');
 
   const determineDateAndShift = () => {
@@ -44,6 +46,9 @@ const Homepage = () => {
 
     return { date, period };
   };
+  const handlePedidoMeseroClick = () => {
+    setPedidoMeseroModalVisible(true);
+  };
 
   useEffect(() => {
     const logoutButton = document.getElementById('logout-button');
@@ -54,6 +59,7 @@ const Homepage = () => {
     const productosButton = document.getElementById('productos-button');
     const pedidoButton = document.getElementById('pedido-button');
     const turnoButton = document.getElementById('turno-button'); // Get Turno button element
+    const mesasButton = document.getElementById('mesas-button'); // Get Mesas button element
     const auth = getAuth(app);
 
     const handleLogout = () => {
@@ -91,6 +97,7 @@ const Homepage = () => {
     const handleTurnoClick = () => {
       setTurnoModalVisible(true);
     };
+    
 
     logoutButton.addEventListener('click', handleLogout);
     inventoryButton.addEventListener('click', handleInventoryClick);
@@ -100,6 +107,7 @@ const Homepage = () => {
     productosButton.addEventListener('click', handleProductosClick);
     pedidoButton.addEventListener('click', handlePedidoClick);
     turnoButton.addEventListener('click', handleTurnoClick);
+    mesasButton.addEventListener('click', handlePedidoMeseroClick);
 
     // Get the authenticated user's email
     const user = auth.currentUser;
@@ -117,6 +125,7 @@ const Homepage = () => {
       productosButton.removeEventListener('click', handleProductosClick);
       pedidoButton.removeEventListener('click', handlePedidoClick);
       turnoButton.removeEventListener('click', handleTurnoClick);
+      mesasButton.removeEventListener('click', handlePedidoMeseroClick);
     };
   }, []);
 
@@ -136,13 +145,15 @@ const Homepage = () => {
         document.title = 'Pedido';
       } else if (turnoModalVisible) {
         document.title = 'Turno';
+      } else if (pedidoMeseroModalVisible) {
+        document.title = 'Mesas';
       } else {
         document.title = 'Homepage';
       }
     };
 
     updateTitle();
-  }, [inventoryModalVisible, clientsModalVisible, barriosModalVisible, proveedoresModalVisible, productosModalVisible, pedidoModalVisible, turnoModalVisible]);
+  }, [inventoryModalVisible, clientsModalVisible, barriosModalVisible, proveedoresModalVisible, productosModalVisible, pedidoModalVisible, turnoModalVisible, pedidoMeseroModalVisible]);
 
   useEffect(() => {
     const { date, period } = determineDateAndShift();
@@ -156,6 +167,7 @@ const Homepage = () => {
   const closeProductosModal = () => setProductosModalVisible(false);
   const closePedidoModal = () => setPedidoModalVisible(false);
   const closeTurnoModal = () => setTurnoModalVisible(false);
+  const closePedidoMeseroModal = () => setPedidoMeseroModalVisible(false);
 
   return (
     <>
@@ -173,6 +185,7 @@ const Homepage = () => {
         {productosModalVisible && <Productos modalVisible={productosModalVisible} closeModal={closeProductosModal} />}
         {pedidoModalVisible && <Pedido modalVisible={pedidoModalVisible} closeModal={closePedidoModal} />}
         {turnoModalVisible && <Turno modalVisible={turnoModalVisible} closeModal={closeTurnoModal} />}
+        {pedidoMeseroModalVisible && <PedidoMesero modalVisible={pedidoMeseroModalVisible} closeModal={closePedidoMeseroModal} />}
         <div className="buttons-container">
           <button id="inventory-button" className="classname-inventory-button">
             <FaBoxOpen />
@@ -201,6 +214,10 @@ const Homepage = () => {
           <button id="turno-button" className="classname-turno-button">
             <FaClock />
             <span>Turno</span>
+          </button>
+          <button id="mesas-button" className="classname-mesas-button" onClick={handlePedidoMeseroClick}>
+          <FaClipboardList />
+            <span>Mesas</span>
           </button>
         </div>
         <div className="verpedidos-container-wrapper">

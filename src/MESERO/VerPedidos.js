@@ -98,7 +98,7 @@ const VerPedidos = ({ setParentPeriod }) => { // Accept setParentPeriod as a pro
       const handleWheel = (event) => {
         if (event.deltaY !== 0) {
           event.preventDefault();
-          ordersList.scrollTop += event.deltaY;
+          ordersList.scrollLeft += event.deltaY; // Scroll horizontally when scrolling vertically
         }
       };
       ordersList.addEventListener('wheel', handleWheel);

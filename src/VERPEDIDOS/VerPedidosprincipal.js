@@ -28,9 +28,26 @@ const VerPedidos = () => {
     fetchUserId();
   }, []);
 
-  const determineDateAndShift = (selectedPeriod) => {
-    const date = '25-3-2025';
-    const period = selectedPeriod;
+  const determineDateAndShift = () => {
+    const now = new Date();
+    let date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    let period = 'MORNING';
+
+    const hours = now.getHours();
+    if (hours >= 17 || hours < 3) {
+      period = 'NIGHT';
+      if (hours < 3) {
+        const previousDay = new Date(now);
+        previousDay.setDate(now.getDate() - 1);
+        date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+      }
+    } else if (hours >= 3 && hours < 6) {
+      period = 'NIGHT';
+      const previousDay = new Date(now);
+      previousDay.setDate(now.getDate() - 1);
+      date = `${previousDay.getDate()}-${previousDay.getMonth() + 1}-${previousDay.getFullYear()}`;
+    }
+
     return { date, period };
   };
 
@@ -38,16 +55,18 @@ const VerPedidos = () => {
     if (!userId) return;
 
     const fetchOrders = () => {
-      const { date, period: selectedPeriod } = determineDateAndShift(period); // Rename destructured variable to avoid conflict
+      const { date, period } = determineDateAndShift();
       const docId = date;
 
       const docRef = doc(db, 'PEDIDOS', docId);
       const unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const userOrders = data[selectedPeriod] || {}; // Use the renamed variable
-          const items = Object.keys(userOrders).filter(key => key !== 'balance').map(key => ({ id: key, ...userOrders[key] }));
-          const filteredItems = items.filter(item => item.status !== 'ENTREGADOs' && !item.tableNumber); // Filter out orders with tableNumber
+          const userOrders = data[period] || {};
+          const items = Object.keys(userOrders)
+            .filter(key => key !== 'balance')
+            .map(key => ({ id: key, ...userOrders[key] }));
+          const filteredItems = items.filter(item => item.status !== 'ENTREGADOs'); // Include all orders
           filteredItems.sort((a, b) => (b.timestamp && b.timestamp.toDate()) - (a.timestamp && a.timestamp.toDate())); // Sort by timestamp
           setOrders(filteredItems);
 
@@ -66,7 +85,7 @@ const VerPedidos = () => {
     };
 
     fetchOrders();
-  }, [period, userId]); // Trigger fetchOrders when period changes
+  }, [period, userId]);
 
   useEffect(() => {
     const ordersList = ordersListRef.current;
@@ -133,6 +152,7 @@ const VerPedidos = () => {
               onClick={() => handleOrderClick(order)}
             >
               <h3>Pedido #{order.idPedido}</h3>
+              {order.tableNumber && <p><strong>Mesa:</strong> {order.tableNumber}</p>} {/* Display table number if available */}
               <p><strong>Cliente:</strong> {order.clientName}</p>
               <p><strong>Teléfono:</strong> {order.clientPhone}</p>
               <p><strong>Dirección:</strong> {order.clientAddress} - {order.clientBarrio}</p>

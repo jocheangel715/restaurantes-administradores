@@ -58,13 +58,27 @@
 
 /* Lista de pedidos */
 .verpedidos-orders-list-unique {
-  display: flex;
-  flex-direction: column; /* Display orders vertically */
+  display: flex; /* Display orders in a row */
+  flex-direction: row; /* Horizontal layout */
   gap: 12px;
   padding: 12px;
-  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: hidden; /* Disable vertical scrolling */
   scrollbar-width: thin;
   scrollbar-color: #6a11cb #1c1c1c;
+}
+
+.verpedidos-orders-list-unique::-webkit-scrollbar {
+  height: 8px; /* Horizontal scrollbar height */
+}
+
+.verpedidos-orders-list-unique::-webkit-scrollbar-thumb {
+  background: #6a11cb;
+  border-radius: 4px;
+}
+
+.verpedidos-orders-list-unique::-webkit-scrollbar-track {
+  background: #1c1c1c;
 }
 
 /* Estilo de cada pedido */

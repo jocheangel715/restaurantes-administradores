@@ -88,7 +88,7 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
         tableNumber: tableNumber,
         status: "PEDIDOTOMADO",
         cart: cart,
-        total: calculateTotal(), // Add total to order data
+        total: calculateTotal(), // Store total as a number
         timestamp: Timestamp.now(),
         pedidotomado: userName, // Add the authenticated user's name
       };
@@ -178,12 +178,12 @@ const PedidoMesero = ({ modalVisible, closeModal }) => {
 
 
   const calculateTotal = () => {
-    return formatPrice(cart.reduce((total, product) => total + parseFloat(product.price), 0));
+    return cart.reduce((total, product) => total + parseFloat(product.price), 0); // Return total as a number
   };
 
   const confirmarPedido = () => {
     const pedido = cart.map(product => 
-        `${product.name} - ${product.ingredients.map(ingredient => `Sin ${ingredient}`).join(', ')}`)
+        `${product.name} - ${product.ingredients.map(ingredient => `SIN ${ingredient}`).join(', ')}`)
         .join('\n');
 
     const total = parseFloat(calculateTotal().replace(/[$,]/g, '')) || 0;
@@ -313,17 +313,17 @@ ${pedido}
                     <strong>Pedido:</strong>
                     {cart.map((product, index) => (
                       <div key={index} className="pedido-summary-item">
-                        <span>{product.name} - {product.price}</span>
+                        <span>{product.name} - {formatPrice(product.price)}</span>
                         <ul>
                           {product.ingredients.map((ingredient) => (
-                            <li key={ingredient}>Sin {ingredient}</li>
+                            <li key={ingredient}>SIN {ingredient}</li>
                           ))}
                         </ul>
                       </div>
                     ))}
                   </div>
                   <div>
-                    <strong>Total a Pagar:</strong> {calculateTotal()}
+                    <strong>Total a Pagar:</strong> {formatPrice(calculateTotal())} {/* Format total for display */}
                   </div>
                 </div>
                 <div className="form-buttons">
@@ -356,7 +356,7 @@ ${pedido}
                       <span>{product.name} - {formatPrice(product.price)}</span>
                       <ul>
                         {product.ingredients.map((ingredient) => (
-                          <li key={ingredient}>Sin {ingredient}</li>
+                          <li key={ingredient}>SIN {ingredient}</li>
                         ))}
                       </ul>
                     </div>
@@ -367,7 +367,7 @@ ${pedido}
                     </div>
                   </div>
                 ))}
-                <h3>Total a Pagar: {calculateTotal()}</h3>
+                <h3>Total a Pagar: {formatPrice(calculateTotal())}</h3>
               </div>
               <div className="productos-buttons-container">
                 <select className="category-select" value={selectedCategory} onChange={handleCategoryChange}>
@@ -416,7 +416,7 @@ ${pedido}
                         checked={selectedIngredients.includes(ingredient)}
                         onChange={() => handleIngredientChange(ingredient)}
                       />
-                      Sin {ingredient}
+                      SIN {ingredient}
                     </label>
                   </div>
                 ))}
