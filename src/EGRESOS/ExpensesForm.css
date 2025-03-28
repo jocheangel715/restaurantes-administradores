@@ -63,6 +63,17 @@
   outline: none;
 }
 
+/* Dropdown (select) */
+.expenses-modal-content select {
+  background: var(--input-background);
+  border: 1px solid var(--input-border);
+  color: var(--text-color);
+  padding: 5px;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* Buttons */
 .expenses-modal-content button {
   padding: 10px 15px;

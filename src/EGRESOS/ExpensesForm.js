@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './ExpensesForm.css';
 
 const formatPrice = (value) => {
@@ -36,15 +38,28 @@ const determineDateAndShift = () => {
 };
 
 const ExpensesForm = ({ modalVisible, closeModal }) => {
-  const [expense, setExpense] = useState({ concept: '', amount: '' });
+  const [expense, setExpense] = useState({ concept: '', amount: '', paymentMethod: 'seleccione metodo de pago' });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setExpense({ ...expense, [name]: name === 'amount' ? formatPrice(value) : value });
+
+    if (name === 'concept') {
+      setExpense({ ...expense, [name]: value.toUpperCase() }); // Always uppercase
+    } else if (name === 'amount') {
+      setExpense({ ...expense, [name]: formatPrice(value) }); // Format amount
+    } else {
+      setExpense({ ...expense, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (expense.paymentMethod === 'seleccione metodo de pago') {
+      toast.error('Por favor seleccione un método de pago.');
+      return;
+    }
+
     const db = getFirestore();
     const { date, period } = determineDateAndShift(); // Get current date and shift
     const docRef = doc(db, 'EGRESOS', date); // Document ID is the date
@@ -57,8 +72,9 @@ const ExpensesForm = ({ modalVisible, closeModal }) => {
       const updatedPeriodData = {
         ...(existingData[period] || {}),
         [new Date().getTime()]: {
-          concept: expense.concept,
-          amount: parseFloat(expense.amount.replace(/[$,]/g, '')) || 0,
+          concept: expense.concept, // Save concept in uppercase
+          amount: parseFloat(expense.amount.replace(/[$,]/g, '')) || 0, // Save amount as number
+          paymentMethod: expense.paymentMethod,
           timestamp: new Date(),
         },
       };
@@ -99,9 +115,23 @@ const ExpensesForm = ({ modalVisible, closeModal }) => {
               required
             />
           </label>
+          <label>
+            Método de Pago:
+            <select
+              name="paymentMethod"
+              value={expense.paymentMethod}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="seleccione metodo de pago">seleccione metodo de pago</option>
+              <option value="EFECTIVO">EFECTIVO</option>
+              <option value="NEQUI">NEQUI</option>
+            </select>
+          </label>
           <button type="submit">Guardar</button>
           <button type="button" onClick={closeModal}>Cerrar</button>
         </form>
+        <ToastContainer />
       </div>
     </div>
   );
