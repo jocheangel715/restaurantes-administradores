@@ -199,7 +199,13 @@ const Detalles = ({ order, closeModal }) => {
   const crearMensajeComanda = (order) => {
     const timestamp = order.timestamp.toDate();
     const fecha = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')}`;
-    const hora = `${String(timestamp.getHours()).padStart(2, '0')}:${String(timestamp.getMinutes()).padStart(2, '0')}`;
+    
+    // Convert to 12-hour format
+    let hours = timestamp.getHours();
+    const minutes = String(timestamp.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12; // Convert 0 to 12 for midnight
+    const hora = `${hours}:${minutes} ${ampm}`;
   
     const resumenProductos = order.cart.reduce((acc, product) => {
       // Incluir observaciones en la clave de agrupación
