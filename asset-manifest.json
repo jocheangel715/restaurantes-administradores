@@ -1,18 +1,18 @@
 {
   "files": {
     "main.css": "/restaurantes-administradores/static/css/main.ebd7ed53.css",
-    "main.js": "/restaurantes-administradores/static/js/main.aa8f7c14.js",
+    "main.js": "/restaurantes-administradores/static/js/main.9151ba85.js",
     "static/js/239.76fcddd4.chunk.js": "/restaurantes-administradores/static/js/239.76fcddd4.chunk.js",
     "static/js/977.cb37744f.chunk.js": "/restaurantes-administradores/static/js/977.cb37744f.chunk.js",
     "static/js/732.9e0d0ba6.chunk.js": "/restaurantes-administradores/static/js/732.9e0d0ba6.chunk.js",
     "index.html": "/restaurantes-administradores/index.html",
     "main.ebd7ed53.css.map": "/restaurantes-administradores/static/css/main.ebd7ed53.css.map",
-    "main.aa8f7c14.js.map": "/restaurantes-administradores/static/js/main.aa8f7c14.js.map",
+    "main.9151ba85.js.map": "/restaurantes-administradores/static/js/main.9151ba85.js.map",
     "239.76fcddd4.chunk.js.map": "/restaurantes-administradores/static/js/239.76fcddd4.chunk.js.map",
     "732.9e0d0ba6.chunk.js.map": "/restaurantes-administradores/static/js/732.9e0d0ba6.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.ebd7ed53.css",
-    "static/js/main.aa8f7c14.js"
+    "static/js/main.9151ba85.js"
   ]
 }
