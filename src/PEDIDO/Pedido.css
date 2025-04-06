@@ -563,3 +563,88 @@ input[type="checkbox"]:hover {
 .product-buttons button:hover {
   background-color: #0056b3;
 }
+
+.observaciones-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1005;
+}
+
+.observaciones-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--container-background);
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 1006;
+  width: 80%;
+  max-width: 400px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.observaciones-modal-content {
+  position: relative;
+  background: var(--form-background);
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.observaciones-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 24px;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.observaciones-modal h2 {
+  margin-bottom: 20px;
+  color: var(--text-color);
+  text-align: center;
+}
+
+.observaciones-modal textarea {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background: var(--input-background);
+  color: var(--text-color);
+  resize: none;
+  font-size: 14px;
+  box-sizing: border-box; /* <-- Esto evita que el padding se sume al 100% de ancho */
+  margin: 0; /* Previene márgenes inesperados */
+}
+
+.observaciones-modal button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 10px;
+  background-color: var(--button-color);
+  color: var(--button-text-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.observaciones-modal button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.product-observation {
+  font-size: 18px;
+  margin-left: 20px;
+  color: var(--text-color);
+  margin-top: 5px;
+}
+

@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Detalles.css';
 import { FaCartPlus, FaSave } from 'react-icons/fa'; // Import icons
+import jsPDF from 'jspdf'; // Add this import for PDF generation
 
 const Detalles = ({ order, closeModal }) => {
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,8 @@ const Detalles = ({ order, closeModal }) => {
   const [domiciliarios, setDomiciliarios] = useState([]);
   const [selectedDomiciliario, setSelectedDomiciliario] = useState('');
   const [isDomicilio, setIsDomicilio] = useState(false);
+  const [domiciliarioName, setDomiciliarioName] = useState('');
+  const [expandedProducts, setExpandedProducts] = useState({});
 
   useEffect(() => {
     fetchProducts();
@@ -25,6 +28,28 @@ const Detalles = ({ order, closeModal }) => {
       fetchDomiciliarios();
     }
   }, [isDomicilio]);
+
+  // Fetch domiciliario name when order.domiciliario changes
+  useEffect(() => {
+    const fetchDomiciliarioName = async () => {
+      if (order.domiciliario) {
+        try {
+          const docRef = doc(db, 'EMPLEADOS', order.domiciliario);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setDomiciliarioName(docSnap.data().name || 'N/A');
+          } else {
+            setDomiciliarioName('N/A');
+          }
+        } catch (error) {
+          console.error('Error fetching domiciliario name:', error);
+          setDomiciliarioName('N/A');
+        }
+      }
+    };
+
+    fetchDomiciliarioName();
+  }, [order.domiciliario]);
 
   const fetchProducts = async () => {
     try {
@@ -161,11 +186,137 @@ const Detalles = ({ order, closeModal }) => {
     }
   };
 
-  const handleLlamadoEnCocina = () => {
+  const formatPrice = (value) => {
+    if (value === null || value === undefined || value === '') return '0';
+    
+    const numberValue = parseFloat(value.toString().replace(/[$,]/g, ''));
+    
+    if (isNaN(numberValue)) return '0';
+  
+    return `$${numberValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  };
+
+  const crearMensajeComanda = (order) => {
+    const timestamp = order.timestamp.toDate();
+    const fecha = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')}`;
+    const hora = `${String(timestamp.getHours()).padStart(2, '0')}:${String(timestamp.getMinutes()).padStart(2, '0')}`;
+  
+    const resumenProductos = order.cart.reduce((acc, product) => {
+      // Incluir observaciones en la clave de agrupación
+      const key = `${product.name}-${JSON.stringify(product.ingredients)}-${product.observation || ''}`;
+      if (!acc[key]) {
+        acc[key] = { ...product, quantity: 0 };
+      }
+      acc[key].quantity += 1;
+      return acc;
+    }, {});
+  
+    // Función para centrar texto en 32 caracteres
+    const centrarTexto = (texto, ancho = 32) => {
+      const espacios = Math.floor((ancho - texto.length) / 2);
+      return ' '.repeat(espacios) + texto;
+    };
+  
+    let subtotal = 0;
+    let mensaje = '';
+    mensaje += '================================\n';
+    mensaje += '           El Sazón\n';
+    mensaje += '         Cl. 64 # 15W-2\n';
+    mensaje += '       Tel: 318 3838977\n';
+    mensaje += '================================\n';
+    mensaje += `Fecha: ${fecha}\n`;
+    mensaje += `Hora: ${hora}\n`;
+    mensaje += `Factura N°: ${order.idPedido || ''}\n`;
+    mensaje += '================================\n';
+    mensaje += 'Cant Producto          Valor\n';
+    mensaje += '--------------------------------\n';
+  
+    const wordWrap = (text, maxLen) => {
+      const words = text.split(' ');
+      const lines = [];
+      let line = '';
+  
+      for (let word of words) {
+        if ((line + word).length <= maxLen) {
+          line += (line ? ' ' : '') + word;
+        } else {
+          if (line) lines.push(line);
+          line = word;
+        }
+      }
+  
+      if (line) lines.push(line);
+      return lines;
+    };
+  
+    Object.values(resumenProductos).forEach(producto => {
+      const cantidad = String(producto.quantity).padEnd(5, ' ');
+      const total = producto.price * producto.quantity;
+      subtotal += total;
+  
+      const nombreProducto = producto.name.slice(0, 17).padEnd(17, ' ');
+      const valor = `$${total.toLocaleString('es-CO')}`.padStart(9, ' ');
+  
+      mensaje += `${cantidad}${nombreProducto}${valor}\n`;
+  
+      if (producto.ingredients && producto.ingredients.length > 0) {
+        producto.ingredients.forEach(ingrediente => {
+          const texto = `SIN ${ingrediente}`;
+          const lineas = wordWrap(texto, 17);
+          lineas.forEach(linea => {
+            mensaje += `     ${linea}\n`;
+          });
+        });
+      }
+  
+      if (producto.observation) {
+        const texto = `OBS: ${producto.observation}`;
+        const lineas = wordWrap(texto, 17);
+        lineas.forEach(linea => {
+          mensaje += `     ${linea}\n`;
+        });
+      }
+  
+      mensaje += '--------------------------------\n';
+    });
+  
+    const valorDomicilio = order.valorDomicilio || 0; // Obtener el valor del domicilio
+    const totalFinal = subtotal + valorDomicilio; // Calcular el total final
+  
+    mensaje += `SUBTOTAL:           $${subtotal.toLocaleString('es-CO')}\n`;
+    mensaje += `DOMICILIO:          $${valorDomicilio.toLocaleString('es-CO')}\n`;
+    mensaje += `TOTAL:              $${totalFinal.toLocaleString('es-CO')}\n`;
+    mensaje += '================================\n';
+    mensaje += `MÉTODO DE PAGO: ${order.paymentMethod}\n`;
+    mensaje += `Cliente: ${order.clientName?.toUpperCase() || 'N/A'}\n`;
+    mensaje += `Dirección: ${order.clientAddress || 'N/A'}\n`;
+    mensaje += `${order.clientBarrio || 'N/A'}\n`;
+    mensaje += '================================\n';
+    mensaje += centrarTexto('¡GRACIAS POR SU VISITA!') + '\n';
+    mensaje += centrarTexto('Vuelva pronto a El Sazón') + '\n';
+    mensaje += '================================';
+  
+    return mensaje;
+  };
+  
+  
+  
+  const handleLlamadoEnCocina = async () => {
     if (!loading) {
-      updateOrderStatus('ENCOCINA');
+      try {
+        const mensajeComanda = crearMensajeComanda(order);
+        await fetch('http://127.0.0.1:8080', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: mensajeComanda }), // Send the formatted message
+        });
+        updateOrderStatus('ENCOCINA');
+      } catch (error) {
+        console.error('Error sending message to server:', error);
+      }
     }
   };
+  
 
   const handleEmpacado = () => {
     if (!loading) {
@@ -229,21 +380,27 @@ const Detalles = ({ order, closeModal }) => {
     try {
       const { date, period } = determineDateAndShift();
       const docId = date;
-
+  
       const orderDoc = doc(db, 'PEDIDOS', docId);
       const orderSnapshot = await getDoc(orderDoc);
-
+  
       if (orderSnapshot.exists()) {
         const data = orderSnapshot.data();
         let orderFound = false;
-
+  
         if (data[period] && data[period][order.id]) {
+          const subtotal = calculateTotal();
+          const valorDomicilio = data[period][order.id].valorDomicilio || 0;
+          const total = subtotal + valorDomicilio;
+  
           data[period][order.id].cart = order.cart;
-          data[period][order.id].total = calculateTotal(); // Update total
+          data[period][order.id].subtotal = subtotal;
+          data[period][order.id].total = total;
+  
           await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
           orderFound = true;
         }
-
+  
         if (orderFound) {
           toast.success('Productos añadidos al pedido');
           closeModal();
@@ -260,6 +417,13 @@ const Detalles = ({ order, closeModal }) => {
       setLoading(false);
     }
   };
+  
+  const toggleProductDetails = (index) => {
+    setExpandedProducts((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
 
   return (
     <div className="detalles-container">
@@ -271,14 +435,33 @@ const Detalles = ({ order, closeModal }) => {
           <h2>Detalles del Pedido</h2>
           <div className="detalles-content">
             <h3>Productos:</h3>
-            {order.cart.map((product, index) => (
-              <div key={index} className="product-item">
-                <span className="product-name">{product.name}</span>
-                <ul className="ingredient-list">
-                  {product.ingredients.map((ingredient) => (
-                    <li key={ingredient} className="ingredient-item">Sin {ingredient}</li>
-                  ))}
-                </ul>
+            {Object.values(order.cart.reduce((acc, product) => {
+              // Incluir observaciones en la clave de agrupación
+              const key = `${product.name}-${JSON.stringify(product.ingredients)}-${product.observation || ''}`;
+              if (!acc[key]) {
+                acc[key] = { ...product, quantity: 0 };
+              }
+              acc[key].quantity += 1;
+              return acc;
+            }, {})).map((product, index) => (
+              <div key={index} className={`product-item ${product.ingredients.length > 0 || product.observation ? 'highlight' : ''}`}>
+                <span
+                  className="product-name"
+                  onClick={() => toggleProductDetails(index)}
+                  style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  {product.quantity} X {product.name}
+                </span>
+                {expandedProducts[index] && (
+                  <ul className="ingredient-list">
+                    {product.ingredients.map((ingredient) => (
+                      <li key={ingredient} className="ingredient-item">{ingredient}</li>
+                    ))}
+                    {product.observation && (
+                      <li className="ingredient-item">OBS: {product.observation}</li>
+                    )}
+                  </ul>
+                )}
               </div>
             ))}
           </div>
@@ -297,30 +480,38 @@ const Detalles = ({ order, closeModal }) => {
             </button>
           </div>
           <div className="domicilio-section">
-            <label className="domicilio-label">
-              <input
-                type="checkbox"
-                checked={isDomicilio}
-                onChange={() => setIsDomicilio(!isDomicilio)}
-              />
-              En domicilio
-            </label>
-            {isDomicilio && (
-              <select
-                className="domiciliario-select"
-                value={selectedDomiciliario}
-                onChange={(e) => setSelectedDomiciliario(e.target.value)}
-              >
-                <option value="">Seleccionar domiciliario</option>
-                {domiciliarios.map((domiciliario) => (
-                  <option key={domiciliario.id} value={domiciliario.id}>{domiciliario.name}</option>
-                ))}
-              </select>
-            )}
-            {isDomicilio && (
-              <button className="detalles-button" onClick={handleEnDomicilio} disabled={loading}>
-                {loading ? 'Procesando...' : 'ENDOMICILIO'}
-              </button>
+            {order.domiciliario ? (
+              <p className="domicilio-texto-blanco">Domicilio asignado a {domiciliarioName}</p>
+            ) : (
+              <>
+                <label className="domicilio-label">
+                  <input
+                    type="checkbox"
+                    checked={isDomicilio}
+                    onChange={() => setIsDomicilio(!isDomicilio)}
+                  />
+                  En domicilio
+                </label>
+                {isDomicilio && (
+                  <>
+                    <select
+                      className="domiciliario-select"
+                      value={selectedDomiciliario}
+                      onChange={(e) => setSelectedDomiciliario(e.target.value)}
+                    >
+                      <option value="">Seleccionar domiciliario</option>
+                      {domiciliarios.map((domiciliario) => (
+                        <option key={domiciliario.id} value={domiciliario.id}>
+                          {domiciliario.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button className="detalles-button" onClick={handleEnDomicilio} disabled={loading}>
+                      {loading ? 'Procesando...' : 'ENDOMICILIO'}
+                    </button>
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -338,7 +529,7 @@ const Detalles = ({ order, closeModal }) => {
                 <h3>Pedido con Restricciones</h3>
                 {order.cart.map((product, index) => (
                   <div key={index}>
-                    <span>{product.name} - {product.price}</span>
+                    <span>{product.name} - {formatPrice(product.price)}</span>
                     <ul>
                       {product.ingredients.map((ingredient) => (
                         <li key={ingredient}>Sin {ingredient}</li>
@@ -346,7 +537,7 @@ const Detalles = ({ order, closeModal }) => {
                     </ul>
                   </div>
                 ))}
-                <h3>Total a Pagar: {calculateTotal()}</h3>
+                <h3>Total a Pagar: {formatPrice(calculateTotal())}</h3>
               </div>
               <div className="productos-buttons-container">
                 <select className="category-select" value={selectedCategory} onChange={handleCategoryChange}>
@@ -359,7 +550,7 @@ const Detalles = ({ order, closeModal }) => {
               <div className="productos-list">
                 {filteredProducts.map((product) => (
                   <div key={product.id} className={`productos-item ${product.status === 'DISABLE' ? 'disable' : ''}`}>
-                    <span>{product.name} - {product.price}</span>
+                    <span>{product.name} - {formatPrice(product.price)}</span>
                     <button onClick={() => addToCart(product)}><FaCartPlus /></button>
                   </div>
                 ))}

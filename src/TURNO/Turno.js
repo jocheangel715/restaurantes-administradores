@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import './turno.css';
-import { toast } from 'react-toastify'; // Assuming you have react-toastify installed
+import { toast, ToastContainer } from 'react-toastify'; // Import ToastContainer
 import jsPDF from 'jspdf'; // Assuming you have jspdf installed
 import autoTable from 'jspdf-autotable'; // Ensure autoTable is imported correctly
 
@@ -74,17 +74,20 @@ const Turno = ({ modalVisible, closeModal }) => {
     const baseDocRef = doc(db, 'BASE', date);
     const baseDocSnap = await getDoc(baseDocRef);
 
+    // Reset values to 0 by default
+    setNequiValueBase(formatPrice(0));
+    setCashValueBase(formatPrice(0));
+    setNequiValueEnd(formatPrice(0));
+    setCashValueEnd(formatPrice(0));
+    setSelectedDeliveryPersons([]);
+
     if (baseDocSnap.exists()) {
       const baseData = baseDocSnap.data();
       if (baseData[turnTime]) {
-        setNequiValueBase(formatPrice(baseData[turnTime].BASENEQUIINICIO));
-        setCashValueBase(formatPrice(baseData[turnTime].BASEEFECTIVOINICIO));
-        if (baseData[turnTime].BASENEQUIFIN) {
-          setNequiValueEnd(formatPrice(baseData[turnTime].BASENEQUIFIN));
-        }
-        if (baseData[turnTime].BASEEFECTIVOFIN) {
-          setCashValueEnd(formatPrice(baseData[turnTime].BASEEFECTIVOFIN));
-        }
+        setNequiValueBase(formatPrice(baseData[turnTime].BASENEQUIINICIO || 0));
+        setCashValueBase(formatPrice(baseData[turnTime].BASEEFECTIVOINICIO || 0));
+        setNequiValueEnd(formatPrice(baseData[turnTime].BASENEQUIFIN || 0));
+        setCashValueEnd(formatPrice(baseData[turnTime].BASEEFECTIVOFIN || 0));
       }
     }
 
@@ -96,9 +99,9 @@ const Turno = ({ modalVisible, closeModal }) => {
         if (domiciliosData[personId][turnTime] && domiciliosData[personId][turnTime].balance) {
           newBalances.push({
             id: personId,
-            name: deliveryPersons.find(p => p.id === personId).name,
-            nequi: domiciliosData[personId][turnTime].balance.NEQUI,
-            efectivo: domiciliosData[personId][turnTime].balance.EFECTIVO
+            name: deliveryPersons.find(p => p.id === personId)?.name || 'Desconocido',
+            nequi: domiciliosData[personId][turnTime].balance.NEQUI || 0,
+            efectivo: domiciliosData[personId][turnTime].balance.EFECTIVO || 0
           });
         }
       });
@@ -246,9 +249,14 @@ const Turno = ({ modalVisible, closeModal }) => {
     setBalances(newBalances);
     setIsProcessing(false);
 
-    toast.success('Datos guardados correctamente');
+    // Show appropriate toast message based on turn type
+    if (turnType === 'INICIO') {
+      toast.success('Caja abierta con éxito', { autoClose: 1000 }); // Set autoClose to 3 seconds
+    } else if (turnType === 'FIN') {
+      toast.success('Cierre de caja con éxito', { autoClose: 1000 }); // Set autoClose to 3 seconds
+    }
+
     setTimeout(() => {
-      closeModal();
     }, 1000);
   };
 
@@ -331,7 +339,7 @@ const generatePDF = async () => {
 
   // Tabla de Egresos
   pdfDoc.setFontSize(16);
-  pdfDoc.text('Egresos del Día', 14, expensesY);
+  pdfDoc.text('Egresos del Turno', 14, expensesY);
 
   autoTable(pdfDoc, {
     startY: expensesY + 5,
@@ -402,7 +410,7 @@ const generatePDF = async () => {
     `${deliveryDetails.join('\n')}\n\n` +
     `En cuanto a egresos, se registraron los siguientes pagos:\n\n` +
     `${expenseDetails.join('\n')}\n\n` +
-    `Al finalizar el día, el total recibido en Nequi ascendió a ${finalNequi}, mientras que en efectivo se acumuló un total de ${finalEfectivo}, sumando un ingreso total de ${formatPrice(parseFloat(finalNequi.replace(/[$,]/g, '')) + parseFloat(finalEfectivo.replace(/[$,]/g, '')))}.`,
+    `Al finalizar el Turno, el total recibido en Nequi ascendió a ${finalNequi}, mientras que en efectivo se acumuló un total de ${finalEfectivo}, sumando un ingreso total de ${formatPrice(parseFloat(finalNequi.replace(/[$,]/g, '')) + parseFloat(finalEfectivo.replace(/[$,]/g, '')))}.`,
     14,
     30,
     { maxWidth: pageWidth - 28 }
@@ -416,7 +424,7 @@ const generatePDF = async () => {
 };
 
 
-const fetchExpenses = async () => {
+const fetchExpenses = async (turnTime) => {
   const db = getFirestore();
   const { date } = determineDateAndShift(); // Get current date
   const docRef = doc(db, 'EGRESOS', date);
@@ -425,16 +433,13 @@ const fetchExpenses = async () => {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
-      const expensesList = Object.entries(data).flatMap(([period, entries]) =>
-        Object.entries(entries).map(([id, expense]) => ({
-          id,
-          period,
-          ...expense,
-        }))
-      );
+      const expensesList = Object.entries(data[turnTime] || {}).map(([id, expense]) => ({
+        id,
+        ...expense,
+      }));
       setExpenses(expensesList);
     } else {
-      setExpenses([]); // No expenses for the day
+      setExpenses([]); // No expenses for the selected turn
     }
   } catch (error) {
     console.error('Error fetching expenses:', error);
@@ -442,10 +447,10 @@ const fetchExpenses = async () => {
 };
 
 useEffect(() => {
-  if (modalVisible) {
-    fetchExpenses(); // Fetch expenses when the modal is visible
+  if (modalVisible && turnTime) {
+    fetchExpenses(turnTime); // Fetch expenses for the selected turn when the modal is visible
   }
-}, [modalVisible]);
+}, [modalVisible, turnTime]);
 
 const generateSummaryReport = () => {
   if (!turnType || !turnTime) {
@@ -483,7 +488,7 @@ ${deliveryDetails.join('\n')}
 En cuanto a egresos, se registraron los siguientes pagos:
 ${expenseDetails.join('\n')}
 
-Al finalizar el día, el total recibido en Nequi ascendió a **${totalNequi}**, mientras que en efectivo se acumuló un total de **${totalEfectivo}**, sumando un ingreso total de **${formatPrice(parseFloat(totalNequi.replace(/[$,]/g, '')) + parseFloat(totalEfectivo.replace(/[$,]/g, '')))}**.
+Al finalizar el Turno, el total recibido en Nequi ascendió a **${totalNequi}**, mientras que en efectivo se acumuló un total de **${totalEfectivo}**, sumando un ingreso total de **${formatPrice(parseFloat(totalNequi.replace(/[$,]/g, '')) + parseFloat(totalEfectivo.replace(/[$,]/g, '')))}**.
 
 La diferencia entre la base inicial y final en Nequi fue de **${formatPrice(nequiDifference)}**, y en efectivo fue de **${formatPrice(cashDifference)}**. En total, el ingreso neto al negocio fue de **${formatPrice(totalBusinessIncome)}**.
 `;
@@ -496,262 +501,266 @@ La diferencia entre la base inicial y final en Nequi fue de **${formatPrice(nequ
   if (!modalVisible) return null;
 
   return (
-    <div className="turno-modal">
-      <div className="turno-modal-content">
-        <h2>Turno</h2>
-        <p>Definir aspectos del turno aquí.</p>
-        <form onSubmit={handleSubmit}>
-          <label>
-            Tipo de Turno:
-            <select value={turnType} onChange={(e) => setTurnType(e.target.value)} required>
-              <option value="">Seleccione</option>
-              <option value="INICIO">Inicio del Turno</option>
-              <option value="FIN">Fin del Turno</option>
-            </select>
-          </label>
-          {turnType === 'INICIO' && (
-            <>
+    <>
+      <ToastContainer autoClose={3000} /> {/* Set autoClose to 3 seconds */}
+      {modalVisible && (
+        <div className="turno-modal" onClick={closeModal}> {/* Close modal on overlay click */}
+          <div className="turno-modal-content" onClick={(e) => e.stopPropagation()}> {/* Prevent closing when clicking inside content */}
+            <h2>Turno</h2>
+            <p>Definir aspectos del turno aquí.</p>
+            <form onSubmit={handleSubmit}>
               <label>
-                Turno:
-                <select value={turnTime} onChange={handleTurnTimeChange} required>
-                  <option value="Seleccione">Seleccione Turno</option>
-                  <option value="MORNING">Mañana</option>
-                  <option value="NIGHT">Noche</option>
+                Tipo de Turno:
+                <select value={turnType} onChange={(e) => setTurnType(e.target.value)} required>
+                  <option value="">Seleccione</option>
+                  <option value="INICIO">Inicio del Turno</option>
+                  <option value="FIN">Fin del Turno</option>
                 </select>
               </label>
-              <label>
-                Valor Base Nequi:
-                <input
-                  type="text"
-                  className="inputturno"
-                  value={nequiValueBase}
-                  onChange={(e) => setNequiValueBase(e.target.value)}
-                  onBlur={(e) => setNequiValueBase(formatPrice(e.target.value))}
-                />
-              </label>
-              <label>
-                Valor Base Efectivo:
-                <input
-                  type="text"
-                  className="inputturno"
-                  value={cashValueBase}
-                  onChange={(e) => setCashValueBase(e.target.value)}
-                  onBlur={(e) => setCashValueBase(formatPrice(e.target.value))}
-                />
-              </label>
-              {deliveryPersons.filter(person => !selectedDeliveryPersons.some(selected => selected.id === person.id)).length > 0 && (
+              {turnType === 'INICIO' && (
                 <>
                   <label>
-                    Domiciliario/Mesero:
-                    <select value={deliveryPerson} onChange={(e) => setDeliveryPerson(e.target.value)}>
-                      <option value="">Seleccione</option>
-                      {deliveryPersons
-                        .filter(person => !selectedDeliveryPersons.some(selected => selected.id === person.id))
-                        .map(person => (
-                          <option key={person.id} value={person.id}>{person.name} ({person.role})</option> // Show role in dropdown
-                        ))}
+                    Turno:
+                    <select value={turnTime} onChange={handleTurnTimeChange} required>
+                      <option value="Seleccione">Seleccione Turno</option>
+                      <option value="MORNING">Mañana</option>
+                      <option value="NIGHT">Noche</option>
                     </select>
                   </label>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <label>
+                    Valor Base Nequi:
                     <input
                       type="text"
                       className="inputturno"
-                      placeholder="NEQUI"
-                      value={nequiValue}
-                      onChange={(e) => setNequiValue(e.target.value)}
-                      onBlur={(e) => setNequiValue(formatPrice(e.target.value))}
+                      value={nequiValueBase}
+                      onChange={(e) => setNequiValueBase(e.target.value)}
+                      onBlur={(e) => setNequiValueBase(formatPrice(e.target.value))}
                     />
+                  </label>
+                  <label>
+                    Valor Base Efectivo:
                     <input
                       type="text"
                       className="inputturno"
-                      placeholder="EFECTIVO"
-                      value={cashValue}
-                      onChange={(e) => setCashValue(e.target.value)}
-                      onBlur={(e) => setCashValue(formatPrice(e.target.value))}
+                      value={cashValueBase}
+                      onChange={(e) => setCashValueBase(e.target.value)}
+                      onBlur={(e) => setCashValueBase(formatPrice(e.target.value))}
                     />
-                  </div>
-                  <button type="button" onClick={handleAddDeliveryPerson}>Agregar</button>
-                </>
-              )}
-              <label>
-                Domiciliarios Agregados:
-                <ul>
-                  {selectedDeliveryPersons.map(person => (
-                    <li key={person.id}>
-                      {deliveryPersons.find(p => p.id === person.id).name}: Nequi - {person.nequi}, Efectivo - {person.efectivo}
+                  </label>
+                  {deliveryPersons.filter(person => !selectedDeliveryPersons.some(selected => selected.id === person.id)).length > 0 && (
+                    <>
+                      <label>
+                        Domiciliario/Mesero:
+                        <select value={deliveryPerson} onChange={(e) => setDeliveryPerson(e.target.value)}>
+                          <option value="">Seleccione</option>
+                          {deliveryPersons
+                            .filter(person => !selectedDeliveryPersons.some(selected => selected.id === person.id))
+                            .map(person => (
+                              <option key={person.id} value={person.id}>{person.name} ({person.role})</option> // Show role in dropdown
+                            ))}
+                        </select>
+                      </label>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <input
                           type="text"
                           className="inputturno"
                           placeholder="NEQUI"
-                          value={person.nequi}
-                          onChange={(e) => handleDeliveryPersonChange(selectedDeliveryPersons.indexOf(person), 'nequi', e.target.value)}
-                          onBlur={(e) => handleDeliveryPersonChange(selectedDeliveryPersons.indexOf(person), 'nequi', formatPrice(e.target.value))}
+                          value={nequiValue}
+                          onChange={(e) => setNequiValue(e.target.value)}
+                          onBlur={(e) => setNequiValue(formatPrice(e.target.value))}
                         />
                         <input
                           type="text"
                           className="inputturno"
                           placeholder="EFECTIVO"
-                          value={person.efectivo}
-                          onChange={(e) => handleDeliveryPersonChange(selectedDeliveryPersons.indexOf(person), 'efectivo', e.target.value)}
-                          onBlur={(e) => handleDeliveryPersonChange(selectedDeliveryPersons.indexOf(person), 'efectivo', formatPrice(e.target.value))}
+                          value={cashValue}
+                          onChange={(e) => setCashValue(e.target.value)}
+                          onBlur={(e) => setCashValue(formatPrice(e.target.value))}
                         />
                       </div>
+                      <button type="button" onClick={handleAddDeliveryPerson}>Agregar</button>
+                    </>
+                  )}
+                  <label>
+                    Domiciliarios Agregados:
+                    <ul>
+                      {selectedDeliveryPersons.map(person => (
+                        <li key={person.id}>
+                          {deliveryPersons.find(p => p.id === person.id).name}: Nequi - {person.nequi}, Efectivo - {person.efectivo}
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <input
+                              type="text"
+                              className="inputturno"
+                              placeholder="NEQUI"
+                              value={person.nequi}
+                              onChange={(e) => handleDeliveryPersonChange(selectedDeliveryPersons.indexOf(person), 'nequi', e.target.value)}
+                              onBlur={(e) => handleDeliveryPersonChange(selectedDeliveryPersons.indexOf(person), 'nequi', formatPrice(e.target.value))}
+                            />
+                            <input
+                              type="text"
+                              className="inputturno"
+                              placeholder="EFECTIVO"
+                              value={person.efectivo}
+                              onChange={(e) => handleDeliveryPersonChange(selectedDeliveryPersons.indexOf(person), 'efectivo', e.target.value)}
+                              onBlur={(e) => handleDeliveryPersonChange(selectedDeliveryPersons.indexOf(person), 'efectivo', formatPrice(e.target.value))}
+                            />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </label>
+                  <button type="submit" disabled={isProcessing}>
+                    {isProcessing ? 'Procesando...' : 'Guardar'}
+                  </button>
+                </>
+              )}
+              {turnType === 'FIN' && (
+                <>
+                  <label>
+                    Turno:
+                    <select value={turnTime} onChange={handleTurnTimeChange} required>
+                      <option value="Seleccione">Seleccione Turno</option>
+                      <option value="MORNING">Mañana</option>
+                      <option value="NIGHT">Noche</option>
+                    </select>
+                  </label>
+                  <table className="turno-table">
+                    <thead>
+                      <tr>
+                        <th>Descripción</th>
+                        <th>Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Base Nequi Inicial</td>
+                        <td>{formatPrice(nequiValueBase)}</td>
+                      </tr>
+                      <tr>
+                        <td>Base Efectivo Inicial</td>
+                        <td>{formatPrice(cashValueBase)}</td>
+                      </tr>
+                      {selectedDeliveryPersons.map(person => (
+                        <React.Fragment key={person.id}>
+                          <tr>
+                            <td>Balance NEQUI del {person.name.split(' ')[0]}</td>
+                            <td>{formatPrice(person.nequi)}</td>
+                          </tr>
+                          <tr>
+                            <td>Balance EFECTIVO del {person.name.split(' ')[0]}</td>
+                            <td>{formatPrice(person.efectivo)}</td>
+                          </tr>
+                        </React.Fragment>
+                      ))}
+                      {balances.length > 0 && (
+                        <>
+                          <tr>
+                            <td>Total de pedidos</td>
+                            <td>{balances[0].totalOrders}</td>
+                          </tr>
+                          <tr>
+                            <td>Pedidos a domicilio</td>
+                            <td>{balances[0].domicilioOrders}</td>
+                          </tr>
+                          <tr>
+                            <td>Pedidos en mesa</td>
+                            <td>{balances[0].mesaOrders}</td>
+                          </tr>
+                        </>
+                      )}
+                      <tr>
+                        <td>Total Nequi</td>
+                        <td>{calculateTotals().totalNequi}</td>
+                      </tr>
+                      <tr>
+                        <td>Total Efectivo</td>
+                        <td>{calculateTotals().totalEfectivo}</td>
+                      </tr>
+                      <tr>
+                        <td
+                          title={" lo que hay en nequi al momento de cerrar Caja con su total y todo"} // Tooltip content
+                        >
+                          Base Nequi Final
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            className="inputturno"
+                            value={nequiValueEnd}
+                            onChange={(e) => setNequiValueEnd(e.target.value)}
+                            onBlur={(e) => setNequiValueEnd(formatPrice(e.target.value))}
+                            required
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                      <td
+                          title={" lo que hay en Efectivo contandolo todo sin meter nada, debe ser igual a el base efectivo"} // Tooltip content
+                        >
+                          Base Efectivo Final
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            className="inputturno"
+                            value={cashValueEnd}
+                            onChange={(e) => setCashValueEnd(e.target.value)}
+                            onBlur={(e) => setCashValueEnd(formatPrice(e.target.value))}
+                            required
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <h3>EGRESOS DEL TURNO</h3>
+                  <table className="turno-table">
+                    <thead>
+                      <tr>
+                        <th>Concepto</th>
+                        <th>Monto</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {expenses.map((expense) => (
+                        <tr key={expense.id}>
+                          <td>{expense.concept}</td>
+                          <td>{formatPrice(expense.amount)}</td>
+                        </tr>
+                      ))}
+                      {expenses.length === 0 && (
+                        <tr>
+                          <td colSpan="2" style={{ textAlign: 'center' }}>
+                            No hay egresos registrados para el Turno.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                  <button onClick={handleSubmit} disabled={isProcessing}>
+                    {isProcessing ? 'Procesando...' : 'Guardar'}
+                  </button>
+                  <button onClick={generatePDF} disabled={isProcessing}>
+                    {isProcessing ? 'Procesando...' : 'Imprimir'}
+                  </button>
+                </>
+              )}
+            </form>
+            {turnType === 'FIN' && balances.length > 0 && (
+              <div>
+                <h3>Balances de Domiciliarios</h3>
+                <ul>
+                  {balances.map(balance => (
+                    <li key={balance.id}>
+                      {balance.name}: Nequi - {balance.nequi}, Efectivo - {balance.efectivo}
                     </li>
                   ))}
                 </ul>
-              </label>
-              <button type="submit" disabled={isProcessing}>
-                {isProcessing ? 'Procesando...' : 'Guardar'}
-              </button>
-            </>
-          )}
-          {turnType === 'FIN' && (
-            <>
-              <label>
-                Turno:
-                <select value={turnTime} onChange={handleTurnTimeChange} required>
-                  <option value="Seleccione">Seleccione Turno</option>
-                  <option value="MORNING">Mañana</option>
-                  <option value="NIGHT">Noche</option>
-                </select>
-              </label>
-              <table className="turno-table">
-                <thead>
-                  <tr>
-                    <th>Descripción</th>
-                    <th>Valor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Base Nequi Inicial</td>
-                    <td>{formatPrice(nequiValueBase)}</td>
-                  </tr>
-                  <tr>
-                    <td>Base Efectivo Inicial</td>
-                    <td>{formatPrice(cashValueBase)}</td>
-                  </tr>
-                  {selectedDeliveryPersons.map(person => (
-                    <React.Fragment key={person.id}>
-                      <tr>
-                        <td>Balance NEQUI del {person.name.split(' ')[0]}</td>
-                        <td>{formatPrice(person.nequi)}</td>
-                      </tr>
-                      <tr>
-                        <td>Balance EFECTIVO del {person.name.split(' ')[0]}</td>
-                        <td>{formatPrice(person.efectivo)}</td>
-                      </tr>
-                    </React.Fragment>
-                  ))}
-                  {balances.length > 0 && (
-                    <>
-                      <tr>
-                        <td>Total de pedidos</td>
-                        <td>{balances[0].totalOrders}</td>
-                      </tr>
-                      <tr>
-                        <td>Pedidos a domicilio</td>
-                        <td>{balances[0].domicilioOrders}</td>
-                      </tr>
-                      <tr>
-                        <td>Pedidos en mesa</td>
-                        <td>{balances[0].mesaOrders}</td>
-                      </tr>
-                    </>
-                  )}
-                  <tr>
-                    <td>Total Nequi</td>
-                    <td>{calculateTotals().totalNequi}</td>
-                  </tr>
-                  <tr>
-                    <td>Total Efectivo</td>
-                    <td>{calculateTotals().totalEfectivo}</td>
-                  </tr>
-                  <tr>
-                    <td
-                      title={" lo que hay en nequi al momento de cerrar Caja con su total y todo"} // Tooltip content
-                    >
-                      Base Nequi Final
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        className="inputturno"
-                        value={nequiValueEnd}
-                        onChange={(e) => setNequiValueEnd(e.target.value)}
-                        onBlur={(e) => setNequiValueEnd(formatPrice(e.target.value))}
-                        required
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                  <td
-                      title={" lo que hay en Efectivo contandolo todo sin meter nada, debe ser igual a el base efectivo"} // Tooltip content
-                    >
-                      Base Efectivo Final
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        className="inputturno"
-                        value={cashValueEnd}
-                        onChange={(e) => setCashValueEnd(e.target.value)}
-                        onBlur={(e) => setCashValueEnd(formatPrice(e.target.value))}
-                        required
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <h3>EGRESOS DEL DÍA</h3>
-              <table className="turno-table">
-                <thead>
-                  <tr>
-                    <th>Concepto</th>
-                    <th>Monto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expenses.map((expense) => (
-                    <tr key={expense.id}>
-                      <td>{expense.concept}</td>
-                      <td>{formatPrice(expense.amount)}</td>
-                    </tr>
-                  ))}
-                  {expenses.length === 0 && (
-                    <tr>
-                      <td colSpan="2" style={{ textAlign: 'center' }}>
-                        No hay egresos registrados para el día.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-              <button onClick={handleSubmit} disabled={isProcessing}>
-                {isProcessing ? 'Procesando...' : 'Guardar'}
-              </button>
-              <button onClick={generatePDF} disabled={isProcessing}>
-                {isProcessing ? 'Procesando...' : 'Imprimir'}
-              </button>
-            </>
-          )}
-        </form>
-        <button onClick={closeModal} disabled={isProcessing}>Cerrar</button>
-        {balances.length > 0 && (
-          <div>
-            <h3>Balances de Domiciliarios</h3>
-            <ul>
-              {balances.map(balance => (
-                <li key={balance.id}>
-                  {balance.name}: Nequi - {balance.nequi}, Efectivo - {balance.efectivo}
-                </li>
-              ))}
-            </ul>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 

@@ -155,3 +155,7 @@ body {
 .verpedidos-container-wrapper {
   margin-top: 25px;
 }
+
+.hidden {
+  display: none !important; /* Asegúrate de que siempre se aplique */
+}

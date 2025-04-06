@@ -82,7 +82,7 @@ const ExpensesForm = ({ modalVisible, closeModal }) => {
       // Update the document
       await setDoc(docRef, { [period]: updatedPeriodData }, { merge: true });
 
-      closeModal();
+      toast.success('Egreso: subido con éxito'); // Show success toast
     } catch (error) {
       console.error('Error al guardar el egreso:', error);
     }
@@ -91,49 +91,50 @@ const ExpensesForm = ({ modalVisible, closeModal }) => {
   if (!modalVisible) return null;
 
   return (
-    <div className="expenses-modal">
-      <div className="expenses-modal-content">
-        <h2>Registrar Egreso</h2>
-        <form onSubmit={handleSubmit}>
-          <label>
-            Concepto:
-            <input
-              type="text"
-              name="concept"
-              value={expense.concept}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label>
-            Monto:
-            <input
-              type="text"
-              name="amount"
-              value={expense.amount}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label>
-            Método de Pago:
-            <select
-              name="paymentMethod"
-              value={expense.paymentMethod}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="seleccione metodo de pago">seleccione metodo de pago</option>
-              <option value="EFECTIVO">EFECTIVO</option>
-              <option value="NEQUI">NEQUI</option>
-            </select>
-          </label>
-          <button type="submit">Guardar</button>
-          <button type="button" onClick={closeModal}>Cerrar</button>
-        </form>
-        <ToastContainer />
+    <>
+      <ToastContainer autoClose={3000} /> {/* Set autoClose to 3 seconds */}
+      <div className="expenses-modal" onClick={closeModal}> {/* Close modal on overlay click */}
+        <div className="expenses-modal-content" onClick={(e) => e.stopPropagation()}> {/* Prevent closing when clicking inside content */}
+          <h2>Registrar Egreso</h2>
+          <form onSubmit={handleSubmit}>
+            <label>
+              Concepto:
+              <input
+                type="text"
+                name="concept"
+                value={expense.concept}
+                onChange={handleInputChange}
+                required
+              />
+            </label>
+            <label>
+              Monto:
+              <input
+                type="text"
+                name="amount"
+                value={expense.amount}
+                onChange={handleInputChange}
+                required
+              />
+            </label>
+            <label>
+              Método de Pago:
+              <select
+                name="paymentMethod"
+                value={expense.paymentMethod}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="seleccione metodo de pago">seleccione metodo de pago</option>
+                <option value="EFECTIVO">EFECTIVO</option>
+                <option value="NEQUI">NEQUI</option>
+              </select>
+            </label>
+            <button type="submit">Guardar</button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

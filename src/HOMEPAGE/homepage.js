@@ -227,7 +227,7 @@ const Homepage = () => {
           <FaClock />
           <span>Turno</span>
         </button>
-        <button id="mesas-button" className="classname-mesas-button" onClick={handlePedidoMeseroClick}>
+        <button id="mesas-button" className="classname-mesas-button hidden" onClick={handlePedidoMeseroClick}>
           <FaClipboardList />
           <span>Mesas</span>
         </button>

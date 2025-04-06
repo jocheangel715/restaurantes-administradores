@@ -14,6 +14,7 @@ const VerPedidos = () => {
   const [userId, setUserId] = useState(''); // State for user ID
   const [statusCounts, setStatusCounts] = useState({}); // State for order status counts
   const ordersListRef = useRef(null); // Ref for orders list
+  const [selectedStatuses, setSelectedStatuses] = useState([]); // State for selected statuses
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -101,6 +102,17 @@ const VerPedidos = () => {
     }
   }, []);
 
+  useEffect(() => {
+    // Automatically select all statuses if "TOTAL PEDIDOS" is selected
+    const allStatuses = [...new Set(orders.map((order) => order.status))];
+    if (
+      selectedStatuses.length > 0 &&
+      selectedStatuses.length === allStatuses.length
+    ) {
+      setSelectedStatuses(allStatuses);
+    }
+  }, [orders]);
+
   const handleOrderClick = (order) => {
     setSelectedOrder(order);
     console.log('Order ID:', order.id); // Log the order ID
@@ -110,13 +122,68 @@ const VerPedidos = () => {
     setPeriod(e.target.value);
   };
 
+  const handleStatusChange = (status) => {
+    setSelectedStatuses((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  const handleTotalCheckboxChange = () => {
+    const allStatuses = [...new Set(orders.map((order) => order.status))];
+    if (selectedStatuses.length === allStatuses.length) {
+      setSelectedStatuses([]); // Deselect all
+    } else {
+      setSelectedStatuses(allStatuses); // Select all unique statuses
+    }
+  };
+
+  const filteredOrders = orders.filter((order) =>
+    selectedStatuses.length > 0 && selectedStatuses.includes(order.status)
+  );
+
+  const formatPrice = (value) => {
+    if (value === null || value === undefined || value === '') return '0';
+  
+    const numberValue = parseFloat(value.toString().replace(/[$,]/g, ''));
+  
+    if (isNaN(numberValue)) return '0';
+  
+    return `$${numberValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  };
+
   return (
     <div className="verpedidos-container">
       <ToastContainer />
       <h2>Pedidos Recientes</h2>
       <div className="status-summary">
+        <span onClick={handleTotalCheckboxChange} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            checked={
+              selectedStatuses.length > 0 &&
+              selectedStatuses.length === [...new Set(orders.map((order) => order.status))].length
+            }
+            onChange={handleTotalCheckboxChange}
+          />
+          <span style={{ marginLeft: '5px' }}>{orders.length} TOTAL PEDIDOS</span>
+        </span>
         {Object.entries(statusCounts).map(([status, count]) => (
-          <span key={status}>{count} {status.replace(/([A-Z])/g, ' $1').toUpperCase()}</span>
+          <span
+            key={status}
+            onClick={() => handleStatusChange(status)}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <input
+              type="checkbox"
+              checked={selectedStatuses.includes(status)}
+              onChange={() => handleStatusChange(status)}
+            />
+            <span style={{ marginLeft: '5px' }}>
+              {count} {status.replace(/([A-Z])/g, ' $1').toUpperCase()}
+            </span>
+          </span>
         ))}
       </div>
       <div className="period-select">
@@ -127,7 +194,7 @@ const VerPedidos = () => {
         </select>
       </div>
       <div className="verpedidos-orders-list" ref={ordersListRef}>
-        {orders.map((order) => {
+        {filteredOrders.map((order) => {
           let statusClass = '';
           switch (order.status) {
             case 'PEDIDOTOMADO':
@@ -156,7 +223,7 @@ const VerPedidos = () => {
               <p><strong>Cliente:</strong> {order.clientName}</p>
               <p><strong>Teléfono:</strong> {order.clientPhone}</p>
               <p><strong>Dirección:</strong> {order.clientAddress} - {order.clientBarrio}</p>
-              <p><strong>Total:</strong> {order.total}</p>
+              <p><strong>Total:</strong> {formatPrice(order.total)}</p>
               <p><strong>Estado:</strong> {order.status}</p>
               <p><strong>Fecha:</strong> {order.timestamp ? order.timestamp.toDate().toLocaleString() : 'N/A'}</p>
             </div>

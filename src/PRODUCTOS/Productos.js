@@ -165,12 +165,18 @@ const Productos = ({ modalVisible, closeModal }) => {
       reader.onload = async (event) => {
         try {
           const json = JSON.parse(event.target.result);
+
+          // Validate JSON structure
+          if (!json.menu || !Array.isArray(json.menu)) {
+            throw new Error("El archivo JSON no tiene el formato esperado.");
+          }
+
           await saveProductsFromJson(json);
           toast.success("Productos importados correctamente");
           fetchProductos();
         } catch (error) {
           console.error("Error al importar productos:", error);
-          toast.error("Error al importar productos");
+          toast.error("Error al importar productos. Asegúrate de que el archivo tenga el formato correcto.");
         }
       };
       reader.readAsText(file);
@@ -178,17 +184,20 @@ const Productos = ({ modalVisible, closeModal }) => {
   };
 
   const saveProductsFromJson = async (json) => {
-    for (const category of json.menu) {
-      for (const product of category.productos) {
+    for (const product of json.menu) {
+      try {
         const newId = await generateNewId();
         const formattedProduct = {
           id: newId,
-          category: category.categoria,
-          name: product.nombre,
-          price: product.precio.toString(),
-          ingredients: product.ingredientes.join(', '),
+          category: product.category || "Sin Categoría",
+          name: product.name || "Sin Nombre",
+          price: product.price ? product.price.toString() : "0",
+          ingredients: product.ingredients || "",
+          status: product.status || "ENABLE",
         };
         await setDoc(doc(db, "MENU", newId), formattedProduct);
+      } catch (error) {
+        console.error("Error al guardar un producto del JSON:", error);
       }
     }
   };
@@ -213,6 +222,33 @@ const Productos = ({ modalVisible, closeModal }) => {
     }
   };
 
+  const handleDownloadMenu = async () => {
+    try {
+      const q = query(collection(db, 'MENU'), orderBy('id', 'asc'));
+      const querySnapshot = await getDocs(q);
+      const menu = [];
+
+      querySnapshot.forEach((doc) => {
+        menu.push(doc.data());
+      });
+
+      const json = JSON.stringify({ menu }, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'menu.json';
+      link.click();
+
+      URL.revokeObjectURL(url);
+      toast.success("Menú descargado correctamente");
+    } catch (error) {
+      console.error("Error al descargar el menú:", error);
+      toast.error("Error al descargar el menú");
+    }
+  };
+
   return (
     <div className="productos-container">
       <ToastContainer />
@@ -224,6 +260,7 @@ const Productos = ({ modalVisible, closeModal }) => {
               <span className="productos-close" onClick={handleCloseModal}>&times;</span>
               <h2 className="modal-header">Administrar Productos</h2>
               <button className="productos-button" onClick={handleAdd}>Agregar</button>
+              <button className="hidden" onClick={handleDownloadMenu}>Descargar Menú</button>
               <input className="hidden" type="file" accept=".json" onChange={handleFileUpload} />
               <select className="category-select" value={selectedCategory} onChange={handleCategoryChange}>
                 {categories.map((category) => (

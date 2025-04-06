@@ -3,7 +3,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Pedido.css';
 import { db } from '../firebase';
-import { doc, setDoc, collection, getDocs, query, where, orderBy, limit, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, query, where, orderBy, limit, deleteDoc, Timestamp, getDoc, onSnapshot } from 'firebase/firestore';
 import ConfirmationDelete from '../RESOURCES/THEMES/CONFIRMATIONDELETE/ConfirmationDelete';
 import { FaEdit, FaTrash, FaSave, FaArrowLeft, FaCartPlus, FaCopy, FaPlus, FaMinus, FaSearch } from 'react-icons/fa'; // Import icons
 import { getAuth } from 'firebase/auth'; // Import getAuth from firebase/auth
@@ -31,6 +31,8 @@ const Pedido = ({ modalVisible, closeModal }) => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [billAmount, setBillAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedObservationProduct, setSelectedObservationProduct] = useState(null); // New state for observation modal
+  const [observation, setObservation] = useState(''); // New state for observation text
   const formatPrice = (value) => {
     if (value === null || value === undefined || value === '') return '0';
     const stringValue = value.toString();
@@ -48,7 +50,10 @@ const Pedido = ({ modalVisible, closeModal }) => {
       fetchClients();
       fetchProveedores();
       fetchProducts();
-      fetchBarrios();
+      const unsubscribeBarrios = fetchBarrios(); // Set up real-time listener
+      return () => {
+        unsubscribeBarrios(); // Clean up listener on unmount
+      };
     }
   }, [modalVisible]);
 
@@ -122,18 +127,18 @@ const Pedido = ({ modalVisible, closeModal }) => {
     }
   };
 
-  const fetchBarrios = async () => {
-    try {
-      const q = query(collection(db, 'BARRIOS'), orderBy('name', 'asc'));
-      const querySnapshot = await getDocs(q);
+  const fetchBarrios = () => {
+    const q = query(collection(db, 'BARRIOS'), orderBy('name', 'asc'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const items = [];
       querySnapshot.forEach((doc) => {
         items.push(doc.data());
       });
       setBarrios(items);
-    } catch (error) {
+    }, (error) => {
       console.error('Error fetching barrios:', error);
-    }
+    });
+    return unsubscribe; // Return the unsubscribe function
   };
 
   const handleUserTypeChange = (type) => {
@@ -545,6 +550,28 @@ const handleSearchProduct = (product) => {
   }
 };
 
+const handleObservationChange = (e) => {
+  setObservation(e.target.value);
+};
+
+const saveObservation = () => {
+  setCart((prevCart) =>
+    prevCart.map((item, idx) =>
+      idx === selectedObservationProduct.cartIndex
+        ? { ...item, observation }
+        : item
+    )
+  );
+  setSelectedObservationProduct(null);
+  setObservation('');
+  toast.success('Observación guardada correctamente.');
+};
+
+const handleObservationModal = (product, index) => {
+  setSelectedObservationProduct({ ...product, cartIndex: index });
+  setObservation(product.observation || '');
+};
+
   return (
     <div className="pedido-container">
       <ToastContainer />
@@ -735,11 +762,15 @@ const handleSearchProduct = (product) => {
           <li key={ingredient}>SIN {ingredient}</li>
         ))}
       </ul>
+      {product.observation && ( // Display observation if it exists
+        <p className="product-observation">{product.observation}</p>
+      )}
     </div>
     <div className="product-buttons">
       <button onClick={() => handleIncreaseQuantity(index)}><FaPlus /></button>
       <button onClick={() => handleDecreaseQuantity(index)}><FaMinus /></button>
-      <button onClick={() => EditToCart(product, index)}><FaSearch /></button> {/* Pass index */}
+      <button onClick={() => EditToCart(product, index)}><FaSearch /></button>
+      <button onClick={() => handleObservationModal(product, index)}><FaEdit /></button>
     </div>
   </div>
 ))}
@@ -810,6 +841,26 @@ const handleSearchProduct = (product) => {
           onConfirm={confirmDelete}
           onCancel={cancelDelete}
         />
+      )}
+
+      {/* Modal for product observations */}
+      {selectedObservationProduct && (
+        <>
+          <div className="observaciones-overlay" onClick={() => setSelectedObservationProduct(null)}></div>
+          <div className="observaciones-modal">
+            <div className="observaciones-modal-content">
+              <span className="observaciones-close" onClick={() => setSelectedObservationProduct(null)}>&times;</span>
+              <h2>Editar Observación</h2>
+              <textarea
+                value={observation}
+                onChange={handleObservationChange}
+                onKeyPress={(e) => e.key === 'Enter' && saveObservation()}
+                placeholder="Escribe aquí tus observaciones..."
+              />
+              <button onClick={saveObservation}>Guardar</button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
