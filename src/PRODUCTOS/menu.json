@@ -1,0 +1,428 @@
+{
+  "menu": [
+    {
+      "price": "29000",
+      "id": "00000001",
+      "ingredients": "CARNE, PECHUGA, SALCHICHA, CHORIZO, MAÍZ TIERNO, TOCINETA, CEBOLLA GRILLE, QUESO GRATINADO, PAPAS RIZADAS, SALSAS AL GUSTO",
+      "name": "Papas Locas",
+      "status": "ENABLE",
+      "category": "Papas Locas"
+    },
+    {
+      "id": "00000002",
+      "status": "ENABLE",
+      "price": "40000",
+      "category": "Papas Locas",
+      "name": "Papas Locas Especiales",
+      "ingredients": "CARNE, PECHUGA, SALCHICHA, CHORIZO, 6 ALAS, MAÍZ TIERNO, TOCINETA, CEBOLLA GRILLE, QUESO GRATINADO, PAPAS RIZADAS, SALSAS AL GUSTO"
+    },
+    {
+      "price": "20000",
+      "category": "Patacones",
+      "ingredients": "CARNE, PECHUGA, SALCHICHA, CHORIZO, 6 ALAS, MAÍZ TIERNO, TOCINETA, CEBOLLA GRILLE, QUESO GRATINADO, PAPAS RIZADAS, SALSAS AL GUSTO",
+      "name": "Patacon Mixto",
+      "id": "00000003",
+      "status": "ENABLE"
+    },
+    {
+      "name": "Patacon Solo Carne",
+      "price": "19000",
+      "ingredients": "CARNE, CEBOLLA GRILLE, SALCHICHA AMERICANA, MAÍZ, QUESO GRATINADO, PIÑA, SALSAS AL GUSTO",
+      "id": "00000004",
+      "category": "Patacones",
+      "status": "ENABLE"
+    },
+    {
+      "ingredients": "POLLO, CEBOLLA GRILLE, SALCHICHA AMERICANA, MAÍZ, QUESO GRATINADO, PIÑA, SALSAS AL GUSTO",
+      "category": "Patacones",
+      "price": "19000",
+      "name": "Patacon Solo Pollo",
+      "status": "ENABLE",
+      "id": "00000005"
+    },
+    {
+      "price": "15000",
+      "category": "Choripapas",
+      "name": "Choripapa",
+      "status": "ENABLE",
+      "id": "00000006",
+      "ingredients": "Chorizo, Papas fritas, Salsas básicas"
+    },
+    {
+      "name": "Choripapa Especial",
+      "status": "ENABLE",
+      "ingredients": "Chorizo premium, Papas rizadas, Toppings especiales, Salsas gourmet",
+      "id": "00000007",
+      "price": "20000",
+      "category": "Choripapas"
+    },
+    {
+      "name": "Salchipapa",
+      "id": "00000008",
+      "price": "15000",
+      "status": "ENABLE",
+      "category": "Salchipapas",
+      "ingredients": "Salchicha americana, Queso rallado, Papas fosforito, Papas rizadas, Salsas al gusto"
+    },
+    {
+      "category": "Salchipapas",
+      "status": "ENABLE",
+      "ingredients": "Salchicha americana, Pollo desmechado, Maíz, Queso gratinado, Papas rizadas, Salsas al gusto",
+      "name": "Salchi Especial",
+      "price": "20000",
+      "id": "00000009"
+    },
+    {
+      "price": "22000",
+      "ingredients": "CARNE, POLLO, CHORIZO, QUESO GRATINADO, SALSAS AL GUSTO",
+      "id": "00000010",
+      "category": "Desgranados",
+      "status": "ENABLE",
+      "name": "Desgranado Mixto"
+    },
+    {
+      "id": "00000011",
+      "ingredients": "CARNE, CHORIZO, QUESO GRATINADO, SALSAS AL GUSTO",
+      "category": "Desgranados",
+      "name": "Desgranado Solo Carne",
+      "status": "ENABLE",
+      "price": "20000"
+    },
+    {
+      "price": "20000",
+      "status": "ENABLE",
+      "id": "00000012",
+      "ingredients": "POLLO, CHORIZO, QUESO GRATINADO, SALSAS AL GUSTO",
+      "name": "Desgranado Solo Pollo",
+      "category": "Desgranados"
+    },
+    {
+      "id": "00000013",
+      "status": "ENABLE",
+      "category": "Especiales",
+      "price": "15000",
+      "name": "Arepa Rellena de Queso",
+      "ingredients": "Queso, Cebolla picada, Papas fosforito, Maíz, Piña, Salsas al gusto"
+    },
+    {
+      "id": "00000014",
+      "ingredients": "Arepa, Carne de hamburguesa, Queso, Jamón, Vegetales, Salsas al gusto",
+      "price": "13000",
+      "name": "Arepa Hamburguesa",
+      "category": "Especiales",
+      "status": "ENABLE"
+    },
+    {
+      "price": "21000",
+      "status": "ENABLE",
+      "ingredients": "Carne 300g, Ensalada (tomate/cebolla), Papas rizadas, Salsas al gusto",
+      "id": "00000015",
+      "name": "Carne al Carbón",
+      "category": "Especiales"
+    },
+    {
+      "ingredients": "Pechuga 400g, Ensalada (tomate/cebolla), Papas rizadas",
+      "id": "00000016",
+      "price": "26000",
+      "status": "ENABLE",
+      "category": "Especiales",
+      "name": "Pechuga Gratinada"
+    },
+    {
+      "ingredients": "Pechuga 400g, Queso gratinado, Jamón, Ensalada, Papas rizadas, Salsas",
+      "category": "Especiales",
+      "name": "Pechuga al Carbón",
+      "status": "ENABLE",
+      "id": "00000017",
+      "price": "21000"
+    },
+    {
+      "category": "Especiales",
+      "name": "Alitas BBQ",
+      "price": "20000",
+      "id": "00000018",
+      "status": "ENABLE",
+      "ingredients": "12 Alas, Papas rizadas, Queso rallado, Salsas"
+    },
+    {
+      "status": "ENABLE",
+      "category": "Especiales",
+      "ingredients": "12 Alas picantes, Papas rizadas, Queso rallado, Salsas",
+      "price": "21000",
+      "name": "Alitas BBQ Picantes",
+      "id": "00000019"
+    },
+    {
+      "id": "00000020",
+      "ingredients": "2 Hot dogs, Papas fritas, Bebida 1L",
+      "category": "Promociones",
+      "name": "2 Perros + Papas + Econolitro",
+      "status": "ENABLE",
+      "price": "29000"
+    },
+    {
+      "price": "30000",
+      "category": "Promociones",
+      "name": "2 Hamburguesas + Econolitro",
+      "id": "00000021",
+      "status": "ENABLE",
+      "ingredients": "2 Hamburguesas sencillas, Bebida 1L"
+    },
+    {
+      "status": "ENABLE",
+      "price": "31000",
+      "category": "Promociones",
+      "name": "2 Arepas + Econolitro",
+      "ingredients": "2 Arepas rellenas, Bebida 1L",
+      "id": "00000022"
+    },
+    {
+      "id": "00000023",
+      "name": "Hamburguesa Sencilla",
+      "category": "Hamburguesas",
+      "price": "15000",
+      "status": "ENABLE",
+      "ingredients": "CARNE 130G, JAMÓN, DOBLE QUESO, LECHUGA, TOMATE, CEBOLLA, PAPAS RIZADAS"
+    },
+    {
+      "id": "00000024",
+      "name": "Hamburguesa Mixta",
+      "price": "17000",
+      "category": "Hamburguesas",
+      "status": "ENABLE",
+      "ingredients": "CARNE 130G, POLLO DESMECHADO, JAMÓN, DOBLE QUESO, LECHUGA, TOMATE, CEBOLLA, PAPAS RIZADAS"
+    },
+    {
+      "price": "20000",
+      "id": "00000025",
+      "status": "ENABLE",
+      "ingredients": "CARNE 130G, FILETE DE POLLO, JAMÓN, DOBLE QUESO, LECHUGA, TOMATE, CEBOLLA, PAPAS RIZADAS",
+      "name": "Hamburguesa Mixta Filete al Carbón",
+      "category": "Hamburguesas"
+    },
+    {
+      "status": "ENABLE",
+      "ingredients": "CARNE 130G, FILETE APANADO DE POLLO, JAMÓN, DOBLE QUESO, LECHUGA, TOMATE, CEBOLLA, PAPAS RIZADAS",
+      "price": "20000",
+      "name": "Hamburguesa Mixta Filete Apanada",
+      "category": "Hamburguesas",
+      "id": "00000026"
+    },
+    {
+      "ingredients": "CARNE 130G, POLLO DESMECHADO, CHORIZO, SALSA RANCHERA, LECHUGA, TOMATE, CEBOLLA, PAPAS RIZADAS",
+      "category": "Hamburguesas",
+      "status": "ENABLE",
+      "id": "00000027",
+      "name": "Hamburguesa Ranchera",
+      "price": "21000"
+    },
+    {
+      "id": "00000028",
+      "price": "21000",
+      "ingredients": "DOBLE CARNE, DOBLE QUESO, JAMÓN, LECHUGA, TOMATE, CEBOLLA, PAPAS RIZADAS",
+      "category": "Hamburguesas",
+      "status": "ENABLE",
+      "name": "Hamburguesa Doble Carne"
+    },
+    {
+      "id": "00000029",
+      "status": "ENABLE",
+      "name": "Hamburguesa Super Especial",
+      "price": "23000",
+      "category": "Hamburguesas",
+      "ingredients": "CARNE 130G, POLLO DESMECHADO, JAMÓN, DOBLE QUESO, TOCINETA, LECHUGA, TOMATE, AROS DE CEBOLLA, PAPAS RIZADAS"
+    },
+    {
+      "id": "00000030",
+      "price": "30000",
+      "ingredients": "DOBLE CARNE, JAMÓN, DOBLE QUESO, TOCINETA, AROS DE CEBOLLA, LECHUGA, TOMATE, VEGETALES, PAPAS RIZADAS",
+      "name": "Hamburguesa La Reina",
+      "status": "ENABLE",
+      "category": "Hamburguesas"
+    },
+    {
+      "name": "Barra Libre",
+      "ingredients": "Salchicha, Cebolla, Queso gratinado, Piña, Maíz, Papitas fosforito, Salsas",
+      "price": "10000",
+      "category": "Perros",
+      "id": "00000031",
+      "status": "ENABLE"
+    },
+    {
+      "price": "14000",
+      "status": "ENABLE",
+      "ingredients": "Salchicha, Cebolla, Queso gratinado, Piña, Maíz, Papitas fosforito, Papas rizadas, Salsas",
+      "id": "00000032",
+      "category": "Perros",
+      "name": "Barra Libre con Papa"
+    },
+    {
+      "price": "18000",
+      "id": "00000033",
+      "category": "Perros",
+      "name": "Americano",
+      "ingredients": "Salchicha americana, Pollo desmechado, Cebolla grille, Queso gratinado, Papitas fosforito, Salsas",
+      "status": "ENABLE"
+    },
+    {
+      "ingredients": "Carne, Pechuga, Chorizo, Maíz, Cebolla grille, Queso gratinado, Papitas fosforito, Salsas",
+      "status": "ENABLE",
+      "price": "21000",
+      "name": "Especial",
+      "id": "00000034",
+      "category": "Perros"
+    },
+    {
+      "price": "17000",
+      "category": "Perros",
+      "id": "00000035",
+      "status": "ENABLE",
+      "ingredients": "Chorizo ranchero, Cebolla, Queso gratinado, Piña, Maíz",
+      "name": "Choriperro"
+    },
+    {
+      "category": "Adicionales",
+      "name": "Queso",
+      "price": "1000",
+      "ingredients": "Queso adicional",
+      "status": "ENABLE",
+      "id": "00000036"
+    },
+    {
+      "status": "ENABLE",
+      "category": "Adicionales",
+      "id": "00000037",
+      "price": "3000",
+      "name": "Chorizo",
+      "ingredients": "Chorizo extra"
+    },
+    {
+      "status": "ENABLE",
+      "ingredients": "Tocineta extra",
+      "name": "Tocineta",
+      "id": "00000038",
+      "price": "2000",
+      "category": "Adicionales"
+    },
+    {
+      "status": "ENABLE",
+      "ingredients": "Salchicha adicional",
+      "category": "Adicionales",
+      "id": "00000039",
+      "price": "3000",
+      "name": "Salchicha Americana"
+    },
+    {
+      "price": "1000",
+      "name": "Aros de Cebolla",
+      "status": "ENABLE",
+      "category": "Adicionales",
+      "id": "00000040",
+      "ingredients": "AROS DE CEBOLLA FRITOS"
+    },
+    {
+      "id": "00000041",
+      "price": "7000",
+      "status": "ENABLE",
+      "name": "Carne de Hamburguesa",
+      "category": "Adicionales",
+      "ingredients": "Porción extra de carne"
+    },
+    {
+      "id": "00000042",
+      "price": "5000",
+      "ingredients": "Porción de pollo desmenuzado",
+      "category": "Adicionales",
+      "name": "Pollo Desmechado",
+      "status": "ENABLE"
+    },
+    {
+      "ingredients": "Papas fritas adicionales",
+      "id": "00000043",
+      "price": "7000",
+      "status": "ENABLE",
+      "category": "Adicionales",
+      "name": "Porción de Papas"
+    },
+    {
+      "status": "ENABLE",
+      "name": "Tarro de Salsa",
+      "price": "1000",
+      "id": "00000044",
+      "ingredients": "Salsa extra en tarro",
+      "category": "Adicionales"
+    },
+    {
+      "ingredients": "MANZANA",
+      "id": "00000045",
+      "category": "Bebidas",
+      "status": "ENABLE",
+      "name": "Pet 250",
+      "price": "2000"
+    },
+    {
+      "ingredients": "MANZANA",
+      "category": "Bebidas",
+      "price": "3000",
+      "name": "Pet 400",
+      "status": "ENABLE",
+      "id": "00000046"
+    },
+    {
+      "status": "ENABLE",
+      "category": "Bebidas",
+      "name": "Cerveza Sol",
+      "ingredients": "1 CERVEZA SOL",
+      "id": "00000047",
+      "price": "4500"
+    },
+    {
+      "name": "Econolitro",
+      "category": "Bebidas",
+      "id": "00000048",
+      "ingredients": "MANZANA",
+      "status": "ENABLE",
+      "price": "5000"
+    },
+    {
+      "id": "00000049",
+      "status": "ENABLE",
+      "price": "6000",
+      "name": "Gaseosa 1.5",
+      "ingredients": "",
+      "category": "Bebidas"
+    },
+    {
+      "id": "00000050",
+      "name": "HIT Pet 500",
+      "category": "Bebidas",
+      "status": "ENABLE",
+      "price": "3000",
+      "ingredients": "TROPICAL"
+    },
+    {
+      "id": "00000051",
+      "category": "Bebidas",
+      "ingredients": "AGUA",
+      "price": "3000",
+      "name": "Agua Personal",
+      "status": "ENABLE"
+    },
+    {
+      "name": "Agua Mini",
+      "price": "2000",
+      "ingredients": "AGUA",
+      "category": "Bebidas",
+      "id": "00000052",
+      "status": "ENABLE"
+    },
+    {
+      "category": "Bebidas",
+      "status": "ENABLE",
+      "price": "4000",
+      "ingredients": "CERVEZA",
+      "name": "Cerveza",
+      "id": "00000053"
+    }
+  ]
+}

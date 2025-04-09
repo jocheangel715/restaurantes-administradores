@@ -260,10 +260,13 @@ const Detalles = ({ order, closeModal }) => {
       const total = producto.price * producto.quantity;
       subtotal += total;
   
-      const nombreProducto = producto.name.slice(0, 17).padEnd(17, ' ');
+      const nombreProductoLines = wordWrap(producto.name, 17); // Wrap product name to fit
       const valor = `$${total.toLocaleString('es-CO')}`.padStart(9, ' ');
   
-      mensaje += `${cantidad}${nombreProducto}${valor}\n`;
+      mensaje += `${cantidad}${nombreProductoLines[0].padEnd(17, ' ')}${valor}\n`;
+      for (let i = 1; i < nombreProductoLines.length; i++) {
+        mensaje += `     ${nombreProductoLines[i]}\n`; // Indent wrapped lines
+      }
   
       if (producto.ingredients && producto.ingredients.length > 0) {
         producto.ingredients.forEach(ingrediente => {
