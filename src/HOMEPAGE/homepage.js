@@ -4,7 +4,7 @@ import { app } from '../firebase';
 import './homepage.css';
 import { FaSignOutAlt, FaBoxOpen, FaUsers, FaMapMarkerAlt, FaTruck, FaUtensils, FaClipboardList, FaClock } from 'react-icons/fa'; // Import FaClock icon
 import Inventory from '../INVENTARIO/Inventory';
-import Clientes from '../CLIENTES/Clientes';
+import Clientes from '../EMPLEADOS/Empleados';
 import Barrios from '../BARRIOS/Barrios';
 import Proveedores from '../PROVEEDORES/Proveedores';
 import Productos from '../PRODUCTOS/Productos';

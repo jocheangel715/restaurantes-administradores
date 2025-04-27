@@ -1,0 +1,161 @@
+.clients-container {
+  padding: 20px;
+}
+
+.clients-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+}
+
+.clients-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--container-background);
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 1001;
+  width: 80%;
+  max-width: 500px;
+  max-height: 80%; /* Add this line */
+  overflow-y: auto; /* Add this line */
+}
+
+.clients-modal-content {
+  position: relative;
+}
+
+.clients-close {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.clients-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.clients-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.clients-label {
+  margin-bottom: 5px;
+  color: var(--text-color);
+}
+
+.clients-input {
+  padding: 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background: var(--input-background);
+  color: var(--text-color);
+}
+
+.clients-button {
+  background-color: var(--button-color);
+  color: var(--button-text-color);
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 20px;
+  margin-right: 10px;
+}
+
+.clients-button:hover {
+  background-color: var(--button-hover-color);
+}
+
+.clients-list {
+  margin-top: 20px;
+}
+
+.clients-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background: var(--input-background);
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+.clients-item .button-container {
+  display: flex;
+  gap: 5px;
+  margin-left: auto; /* Align buttons to the right */
+}
+
+.clients-item button {
+  background-color: var(--button-color);
+  color: var(--button-text-color);
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 50%;
+  margin-left: 10px;
+  height: 40px;
+  width: 40px;
+  font-size: 18px;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.clients-item button:hover {
+  background-color: var(--button-hover-color);
+  transform: scale(1.1);
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.phone-container {
+  display: flex;
+  align-items: center;
+}
+
+.phone-country-code {
+  margin-right: 10px;
+  padding: 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background: var(--input-background);
+  color: var(--text-color);
+}
+
+.phone-number {
+  flex: 1;
+}
+
+.schedule-container {
+  display: flex;
+  align-items: center;
+}
+
+.schedule-select {
+  margin-right: 10px;
+  padding: 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background: var(--input-background);
+  color: var(--text-color);
+}
+
+.modal-header {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+}

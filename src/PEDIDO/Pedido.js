@@ -162,43 +162,48 @@ const Pedido = ({ modalVisible, closeModal }) => {
   const handleSearchClient = async () => {
     setLoading(true);
     try {
-        // Normalizar el número ingresado eliminando espacios
-        let rawPhone = phone.replace(/\s+/g, '');
+      let rawInput = phone.replace(/\s+/g, ''); // Elimina espacios
+      let querySnapshot;
 
-        // Asegurar que el número no tenga doble prefijo +57
-        if (rawPhone.startsWith('+57')) {
-            rawPhone = rawPhone.replace(/^(\+57)/, ''); // Remover solo el primer +57 si existe
+      if (/^\d+$/.test(rawInput) && rawInput.length === 8) {
+        // Si el input es un ID (8 dígitos)
+        const q = query(collection(db, 'CLIENTES'), where('id', '==', rawInput));
+        querySnapshot = await getDocs(q);
+      } else {
+        // Si el input es un número de teléfono
+        if (rawInput.startsWith('+57')) {
+          rawInput = rawInput.replace(/^(\+57)/, ''); // Remover prefijo +57 si existe
         }
 
-        // Construcción de variantes del número
         const normalizedPhones = [
-            rawPhone,                  // 3028470281
-            `+57${rawPhone}`,          // +573028470281
-            `+57 ${rawPhone.slice(0, 3)} ${rawPhone.slice(3)}` // +57 302 8470281
+          rawInput,                  // 3028470281
+          `+57${rawInput}`,          // +573028470281
+          `+57 ${rawInput.slice(0, 3)} ${rawInput.slice(3)}` // +57 302 8470281
         ];
 
-        // Consultar la base de datos con los tres formatos
         const q = query(collection(db, 'CLIENTES'), where('phone', 'in', normalizedPhones));
-        const querySnapshot = await getDocs(q);
+        querySnapshot = await getDocs(q);
+      }
 
-        if (!querySnapshot.empty) {
-            const clientData = querySnapshot.docs[0].data();
-            setClient(clientData);
-            setCart([]); // Limpiar carrito
-            setPaymentMethod(''); // Restablecer método de pago
-            setBillAmount(''); // Restablecer monto de factura
-            setError('');
-        } else {
-            setClient({ id: '', name: '', phone: rawPhone, address: '', barrio: '' });
-            setError('Cliente no encontrado. Complete los datos para registrar un nuevo cliente.');
-        }
+      if (!querySnapshot.empty) {
+        const clientData = querySnapshot.docs[0].data();
+        setClient(clientData);
+        setCart([]); // Limpiar carrito
+        setPaymentMethod(''); // Restablecer método de pago
+        setBillAmount(''); // Restablecer monto de factura
+        setError('');
+      } else {
+        const newId = await generateNewClientId(); // Generar nuevo ID para el cliente
+        setClient({ id: newId, name: '', phone: rawInput, address: '', barrio: '' });
+        setError('Cliente no encontrado. Complete los datos para registrar un nuevo cliente.');
+      }
     } catch (error) {
-        console.error('Error buscando cliente:', error);
-        setError('Error al buscar cliente. Intente nuevamente.');
+      console.error('Error buscando cliente:', error);
+      setError('Error al buscar cliente. Intente nuevamente.');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
 
 
@@ -599,7 +604,7 @@ const handleObservationModal = (product, index) => {
               {userType === 'cliente' && (
                 <div className="client-search">
                   <label>
-                    Número de Teléfono:
+                    Número de Teléfono o ID:
                     <input
                       type="text"
                       value={phone}
@@ -611,6 +616,16 @@ const handleObservationModal = (product, index) => {
                   {error && <p className="error-message">{error}</p>}
                   {client.phone && (
                     <form className="pedido-form" onSubmit={handleSubmit}>
+                      <div className="pedido-form-group">
+                        <label>ID del Cliente:</label>
+                        <input
+                          type="text"
+                          name="id"
+                          value={client.id}
+                          readOnly
+                          className="readonly-input"
+                        />
+                      </div>
                       <div className="pedido-form-group">
                         <label>Nombre:</label>
                         <input
