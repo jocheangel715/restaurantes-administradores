@@ -33,6 +33,8 @@ const Pedido = ({ modalVisible, closeModal }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedObservationProduct, setSelectedObservationProduct] = useState(null); // New state for observation modal
   const [observation, setObservation] = useState(''); // New state for observation text
+  const [searchType, setSearchType] = useState('phone'); // New state for search type
+
   const formatPrice = (value) => {
     if (value === null || value === undefined || value === '') return '0';
     const stringValue = value.toString();
@@ -159,43 +161,77 @@ const Pedido = ({ modalVisible, closeModal }) => {
     }
   };
 
+  const compararIds = (id1, id2) => {
+    const normalizado1 = id1.toString().replace(/^0+/, '');
+    const normalizado2 = id2.toString().replace(/^0+/, '');
+    return normalizado1 === normalizado2;
+  };
+
+  const handleSearchTypeChange = (e) => {
+    setSearchType(e.target.value);
+    setPhone(''); // Clear the input when switching search type
+  };
+
   const handleSearchClient = async () => {
     setLoading(true);
     try {
-      let rawInput = phone.replace(/\s+/g, ''); // Elimina espacios
+      let rawInput = phone.replace(/[^\d+]/g, ''); // Elimina todo menos números y el '+'
       let querySnapshot;
 
-      if (/^\d+$/.test(rawInput) && rawInput.length === 8) {
-        // Si el input es un ID (8 dígitos)
-        const q = query(collection(db, 'CLIENTES'), where('id', '==', rawInput));
+      if (searchType === 'id' && /^\d+$/.test(rawInput)) {
+        // Buscar por ID
+        const q = query(collection(db, 'CLIENTES'));
         querySnapshot = await getDocs(q);
-      } else {
-        // Si el input es un número de teléfono
+
+        const matchingDoc = querySnapshot.docs.find((doc) =>
+          compararIds(doc.data().id, rawInput)
+        );
+
+        if (matchingDoc) {
+          const clientData = matchingDoc.data();
+          setClient(clientData);
+          setCart([]);
+          setPaymentMethod('');
+          setBillAmount('');
+          setError('');
+        } else {
+          const newId = await generateNewClientId();
+          setClient({ id: newId, name: '', phone: rawInput, address: '', barrio: '' });
+          setError('Cliente no encontrado. Complete los datos para registrar un nuevo cliente.');
+        }
+      } else if (searchType === 'phone') {
+        // Buscar por teléfono
         if (rawInput.startsWith('+57')) {
-          rawInput = rawInput.replace(/^(\+57)/, ''); // Remover prefijo +57 si existe
+          rawInput = rawInput.replace(/^(\+57)/, '');
         }
 
+        // Normalizamos diferentes formas de almacenar teléfono
         const normalizedPhones = [
-          rawInput,                  // 3028470281
-          `+57${rawInput}`,          // +573028470281
-          `+57 ${rawInput.slice(0, 3)} ${rawInput.slice(3)}` // +57 302 8470281
+          rawInput,                  // 3054715845
+          `+57${rawInput}`,           // +573054715845
+          `+57 ${rawInput.slice(0, 3)} ${rawInput.slice(3)}` // +57 3054715845
         ];
-
-        const q = query(collection(db, 'CLIENTES'), where('phone', 'in', normalizedPhones));
+  
+        // Limpiar cualquier espacio extra
+        const cleanedPhones = normalizedPhones.map(phone => phone.replace(/\s+/g, ''));
+  
+        const q = query(collection(db, 'CLIENTES'), where('phone', 'in', cleanedPhones));
         querySnapshot = await getDocs(q);
-      }
-
-      if (!querySnapshot.empty) {
-        const clientData = querySnapshot.docs[0].data();
-        setClient(clientData);
-        setCart([]); // Limpiar carrito
-        setPaymentMethod(''); // Restablecer método de pago
-        setBillAmount(''); // Restablecer monto de factura
-        setError('');
+  
+        if (!querySnapshot.empty) {
+          const clientData = querySnapshot.docs[0].data();
+          setClient(clientData);
+          setCart([]);
+          setPaymentMethod('');
+          setBillAmount('');
+          setError('');
+        } else {
+          const newId = await generateNewClientId();
+          setClient({ id: newId, name: '', phone: rawInput, address: '', barrio: '' });
+          setError('Cliente no encontrado. Complete los datos para registrar un nuevo cliente.');
+        }
       } else {
-        const newId = await generateNewClientId(); // Generar nuevo ID para el cliente
-        setClient({ id: newId, name: '', phone: rawInput, address: '', barrio: '' });
-        setError('Cliente no encontrado. Complete los datos para registrar un nuevo cliente.');
+        setError('Por favor, ingrese un ID o número de teléfono válido.');
       }
     } catch (error) {
       console.error('Error buscando cliente:', error);
@@ -204,9 +240,7 @@ const Pedido = ({ modalVisible, closeModal }) => {
       setLoading(false);
     }
   };
-
-
-
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setClient({ 
@@ -603,6 +637,28 @@ const handleObservationModal = (product, index) => {
   
               {userType === 'cliente' && (
                 <div className="client-search">
+                  <div className="search-type-container">
+                    <label>
+                      <input
+                        type="radio"
+                        name="searchType"
+                        value="phone"
+                        checked={searchType === 'phone'}
+                        onChange={handleSearchTypeChange}
+                      />
+                      Teléfono
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="searchType"
+                        value="id"
+                        checked={searchType === 'id'}
+                        onChange={handleSearchTypeChange}
+                      />
+                      ID
+                    </label>
+                  </div>
                   <label>
                     Número de Teléfono o ID:
                     <input
@@ -612,6 +668,7 @@ const handleObservationModal = (product, index) => {
                       onKeyPress={handleKeyPress}
                     />
                   </label>
+                  
                   {loading && <p className="loading-message">Buscando cliente...</p>}
                   {error && <p className="error-message">{error}</p>}
                   {client.phone && (
