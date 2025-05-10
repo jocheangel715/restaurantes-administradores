@@ -23,7 +23,7 @@ const categoryOptions = [
 ];
 
 const Productos = ({ modalVisible, closeModal }) => {
-  const [producto, setProducto] = useState({ id: '', category: '', name: '', price: '', ingredients: '' });
+  const [producto, setProducto] = useState({ id: '', category: '', name: '', price: '', ingredients: '', url: '', turno: '' });
   const [productos, setProductos] = useState([]);
   const [filteredProductos, setFilteredProductos] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -80,14 +80,14 @@ const Productos = ({ modalVisible, closeModal }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-  
+
     if (name === "price") {
       const rawValue = value.replace(/[$,]/g, ''); // Eliminar símbolos para convertir
       const numberValue = parseFloat(rawValue);
-  
+
       // Si es un número válido, lo guarda con formato; si no, guarda "0"
       setProducto({ ...producto, [name]: isNaN(numberValue) ? 0 : numberValue });
-  
+
       // Actualiza el campo de entrada con formato mientras se escribe
       e.target.value = formatPrice(numberValue);
     } else {
@@ -95,13 +95,47 @@ const Productos = ({ modalVisible, closeModal }) => {
     }
   };
 
+  const isValidUrl = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
+    // Validar campos obligatorios
+    if (!producto.name.trim()) {
+      toast.error("Por favor, completa el campo 'Nombre del Producto'.");
+      return;
+    }
+    if (!producto.price) {
+      toast.error("Por favor, completa el campo 'Precio'.");
+      return;
+    }
+    if (!producto.category) {
+      toast.error("Por favor, selecciona una 'Categoría'.");
+      return;
+    }
+    if (!producto.ingredients.trim()) {
+      toast.error("Por favor, completa el campo 'Ingredientes'.");
+      return;
+    }
+    if (!producto.status) {
+      toast.error("Por favor, selecciona un 'Estado'.");
+      return;
+    }
+  
     try {
       const formattedProducto = {
         ...producto,
-        price: producto.price.toString().replace(/[^0-9.]/g, ''), // Ensure price is a string
-        ingredients: producto.ingredients.toUpperCase(), // Save ingredients in uppercase
+        price: producto.price.toString().replace(/[^0-9.]/g, ''), // Asegurar que el precio sea un string
+        ingredients: producto.ingredients.toUpperCase(), // Guardar ingredientes en mayúsculas
+        url: producto.url, // Incluir URL
+        turno: producto.turno, // Incluir Turno
       };
       await setDoc(doc(db, "MENU", producto.id), formattedProducto);
       toast.success("Producto registrado correctamente");
@@ -144,13 +178,13 @@ const Productos = ({ modalVisible, closeModal }) => {
 
   const handleBack = () => {
     setIsAdding(false);
-    setProducto({ id: '', category: '', name: '', price: '', ingredients: '' });
+    setProducto({ id: '', category: '', name: '', price: '', ingredients: '', url: '', turno: '' });
   };
 
   const handleAdd = () => {
     fetchLastProductoId();
     setIsAdding(true);
-    setProducto({ id: '', category: '', name: '', price: '', ingredients: '' });
+    setProducto({ id: '', category: '', name: '', price: '', ingredients: '', url: '', turno: '' });
   };
 
   const handleCloseModal = () => {
@@ -194,6 +228,8 @@ const Productos = ({ modalVisible, closeModal }) => {
           price: product.price ? product.price.toString() : "0",
           ingredients: product.ingredients || "",
           status: product.status || "ENABLE",
+          url: product.url || "", // Include URL field
+          turno: product.turno || "", // Include Turno field
         };
         await setDoc(doc(db, "MENU", newId), formattedProduct);
       } catch (error) {
@@ -354,6 +390,39 @@ const Productos = ({ modalVisible, closeModal }) => {
                     <option value="ENABLE">ENABLE</option>
                     <option value="DISABLE">DISABLE</option>
                   </select>
+                </div>
+                <div className="productos-form-group">
+                  <label className="productos-label">URL:</label>
+                  <input
+                    className="productos-input"
+                    type="text"
+                    name="url"
+                    value={producto.url}
+                    onChange={handleInputChange}
+                  />
+                  {producto.url && isValidUrl(producto.url) && (
+                    <div className="url-preview">
+                      <img
+                        src={producto.url}
+                        alt="Vista previa"
+                        style={{ maxWidth: '100%', maxHeight: '200px', marginTop: '10px' }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          toast.error("La URL proporcionada no es válida para una imagen.");
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="productos-form-group">
+                  <label className="productos-label">Turno:</label>
+                  <input
+                    className="productos-input"
+                    type="text"
+                    name="turno"
+                    value={producto.turno}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <button className="productos-button" type="submit">Guardar</button>
                 <button className="productos-button" type="button" onClick={handleBack}>Atrás</button>

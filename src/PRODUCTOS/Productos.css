@@ -194,3 +194,13 @@
   margin-bottom: 20px;
   text-align: center;
 }
+
+.url-preview {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.url-preview img {
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+}

@@ -384,6 +384,7 @@ const generatePDF = async () => {
   // Nueva página para el informe resumen
   pdfDoc.addPage();
 
+  // Use generateSummaryReport for the written summary
   const { totalNequi: finalNequi, totalEfectivo: finalEfectivo } = calculateTotals();
   const initialNequi = formatPrice(nequiValueBase);
   const initialCash = formatPrice(cashValueBase);
@@ -393,24 +394,30 @@ const generatePDF = async () => {
     const nequi = formatPrice(person.nequi);
     const efectivo = formatPrice(person.efectivo);
     return efectivo !== '$0'
-      ? `${name} entregó un total de ${nequi} en Nequi y ${efectivo} en efectivo.`
-      : `${name} entregó un total de ${nequi} en Nequi.`;
+      ? `• ${name} entregó un total de ${nequi} en Nequi y ${efectivo} en efectivo.`
+      : `• ${name} entregó un total de ${nequi} en Nequi.`;
   });
 
-  const expenseDetails = expenses.map(expense => 
-    `${capitalizeName(expense.concept)} por un monto de ${formatPrice(expense.amount)}.`
-  );
+  const expenseDetails = expenses.length > 0
+    ? expenses.map(expense => 
+        `• ${capitalizeName(expense.concept)} por un monto de ${formatPrice(expense.amount)}.`)
+    : ['En el turno no hubieron egresos'];
 
   pdfDoc.setFontSize(18);
-  pdfDoc.text('Informe escrito', pageWidth / 2, 20, { align: 'center' });
+  pdfDoc.text('Registro de Caja - Jornada del Día', pageWidth / 2, 20, { align: 'center' });
 
   pdfDoc.setFontSize(12);
   pdfDoc.text(
-    `Hoy se abrió la caja con un balance inicial de ${initialCash} en efectivo y ${initialNequi} en Nequi. Durante la jornada, se recibieron ingresos a través de los domiciliarios:\n\n` +
+    `Hoy se abrió la caja con un balance inicial de ${initialCash} en efectivo y ${initialNequi} en Nequi.\n\n` +
+    `Durante la jornada, se recibieron ingresos a través de los domiciliarios:\n\n` +
     `${deliveryDetails.join('\n')}\n\n` +
+    `El total esperado en efectivo es de ${calculateTotals().totalEfectivo}\n` +
+    `El efectivo contado es de ${formatPrice(cashValueEnd)}\n\n` +
+    `El total esperado en Nequi es de ${calculateTotals().totalNequi}\n` +
+    `El Nequi contado es de ${formatPrice(nequiValueEnd)}\n\n` +
     `En cuanto a egresos, se registraron los siguientes pagos:\n\n` +
     `${expenseDetails.join('\n')}\n\n` +
-    `Al finalizar el Turno, el total recibido en Nequi ascendió a ${finalNequi}, mientras que en efectivo se acumuló un total de ${finalEfectivo}, sumando un ingreso total de ${formatPrice(parseFloat(finalNequi.replace(/[$,]/g, '')) + parseFloat(finalEfectivo.replace(/[$,]/g, '')))}.`,
+    `Al finalizar el turno, el total recibido en Nequi ascendió a ${formatPrice(nequiValueEnd)}, mientras que en efectivo se acumuló un total de ${formatPrice(cashValueEnd)}, sumando un ingreso total de ${formatPrice(parseFloat(nequiValueEnd.replace(/[$,]/g, '')) + parseFloat(cashValueEnd.replace(/[$,]/g, '')))}.`,
     14,
     30,
     { maxWidth: pageWidth - 28 }
@@ -469,28 +476,36 @@ const generateSummaryReport = () => {
   const totalBusinessIncome = nequiDifference + cashDifference;
 
   const deliveryDetails = selectedDeliveryPersons.map(person => {
-    const name = deliveryPersons.find(p => p.id === person.id)?.name || 'Desconocido';
+    const name = capitalizeName(deliveryPersons.find(p => p.id === person.id)?.name || 'Desconocido');
     const nequi = formatPrice(person.nequi);
     const efectivo = formatPrice(person.efectivo);
     return efectivo !== '$0'
-      ? `**${name}** entregó un total de **${nequi}** en Nequi y **${efectivo}** en efectivo.`
-      : `**${name}** entregó un total de **${nequi}** en Nequi.`;
+      ? `• ${name} entregó un total de ${nequi} en Nequi y ${efectivo} en efectivo.`
+      : `• ${name} entregó un total de ${nequi} en Nequi.`;
   });
 
   const expenseDetails = expenses.map(expense => 
-    `**${expense.concept}** por un monto de **${formatPrice(expense.amount)}**.`
+    `• ${capitalizeName(expense.concept)} por un monto de ${formatPrice(expense.amount)}.`
   );
 
   const report = `
-Hoy se abrió la caja con un balance inicial de **${formatPrice(initialCash)}** en efectivo y **${formatPrice(initialNequi)}** en Nequi. Durante la jornada, se recibieron ingresos a través de los domiciliarios:
+Registro de Caja - Jornada del Día
+
+Hoy se abrió la caja con un balance inicial de ${formatPrice(initialCash)} en efectivo y ${formatPrice(initialNequi)} en Nequi.
+
+Durante la jornada, se recibieron ingresos a través de los domiciliarios:
 ${deliveryDetails.join('\n')}
+
+El total esperado en efectivo es de ${formatPrice(totalEfectivo)}
+El efectivo contado es de ${formatPrice(finalCash)}
+
+El total esperado en Nequi es de ${formatPrice(totalNequi)}
+El Nequi contado es de ${formatPrice(finalNequi)}
 
 En cuanto a egresos, se registraron los siguientes pagos:
 ${expenseDetails.join('\n')}
 
-Al finalizar el Turno, el total recibido en Nequi ascendió a **${totalNequi}**, mientras que en efectivo se acumuló un total de **${totalEfectivo}**, sumando un ingreso total de **${formatPrice(parseFloat(totalNequi.replace(/[$,]/g, '')) + parseFloat(totalEfectivo.replace(/[$,]/g, '')))}**.
-
-La diferencia entre la base inicial y final en Nequi fue de **${formatPrice(nequiDifference)}**, y en efectivo fue de **${formatPrice(cashDifference)}**. En total, el ingreso neto al negocio fue de **${formatPrice(totalBusinessIncome)}**.
+Al finalizar el turno, el total recibido en Nequi ascendió a ${formatPrice(finalNequi)}, mientras que en efectivo se acumuló un total de ${formatPrice(finalCash)}, sumando un ingreso total de ${formatPrice(totalBusinessIncome)}.
 `;
 
   const newWindow = window.open('', '_blank');
