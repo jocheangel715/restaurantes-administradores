@@ -20,6 +20,11 @@ const Turno = ({ modalVisible, closeModal }) => {
   const [balances, setBalances] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [expenses, setExpenses] = useState([]); // State to store expenses
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Por defecto, hoy en formato yyyy-mm-dd
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
 
   useEffect(() => {
     const fetchDeliveryPersons = async () => {
@@ -66,9 +71,25 @@ const Turno = ({ modalVisible, closeModal }) => {
     return { date, period };
   };
 
-  const fetchTurnData = async (turnTime) => {
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
+    // Si ya hay un turno seleccionado, recargar datos para esa fecha y turno
+    if (turnTime) {
+      fetchTurnData(turnTime, e.target.value);
+      fetchExpenses(turnTime, e.target.value);
+    }
+  };
+
+  const fetchTurnData = async (turnTime, customDate) => {
     const db = getFirestore();
-    const { date } = determineDateAndShift();
+    // Usar la fecha seleccionada si se provee, si no usar la lógica anterior
+    let date;
+    if (customDate) {
+      const [yyyy, mm, dd] = customDate.split('-');
+      date = `${parseInt(dd)}-${parseInt(mm)}-${yyyy}`;
+    } else {
+      date = determineDateAndShift().date;
+    }
     const domiciliosDocRef = doc(db, 'DOMICILIOS', date);
     const domiciliosDocSnap = await getDoc(domiciliosDocRef);
     const baseDocRef = doc(db, 'BASE', date);
@@ -110,9 +131,15 @@ const Turno = ({ modalVisible, closeModal }) => {
     }
   };
 
-  const fetchOrderData = async (turnTime) => {
+  const fetchOrderData = async (turnTime, customDate) => {
     const db = getFirestore();
-    const { date } = determineDateAndShift();
+    let date;
+    if (customDate) {
+      const [yyyy, mm, dd] = customDate.split('-');
+      date = `${parseInt(dd)}-${parseInt(mm)}-${yyyy}`;
+    } else {
+      date = determineDateAndShift().date;
+    }
     const pedidosDocRef = doc(db, 'PEDIDOS', date);
     const pedidosDocSnap = await getDoc(pedidosDocRef);
 
@@ -180,21 +207,24 @@ const Turno = ({ modalVisible, closeModal }) => {
   const handleTurnTimeChange = async (e) => {
     const selectedTurnTime = e.target.value;
     setTurnTime(selectedTurnTime);
-    await fetchTurnData(selectedTurnTime);
     if (turnType === 'FIN') {
-      const { totalOrders, domicilioOrders, mesaOrders } = await fetchOrderData(selectedTurnTime);
+      await fetchTurnData(selectedTurnTime, selectedDate);
+      await fetchExpenses(selectedTurnTime, selectedDate);
+      const { totalOrders, domicilioOrders, mesaOrders } = await fetchOrderData(selectedTurnTime, selectedDate);
       setBalances(prevBalances => prevBalances.map(balance => ({
         ...balance,
         totalOrders,
         domicilioOrders,
         mesaOrders
       })));
+    } else {
+      await fetchTurnData(selectedTurnTime);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!turnType || !turnTime) { // Removed nequiValueBase and cashValueBase from validation
+    if (!turnType || !turnTime) {
       alert('Todos los campos son obligatorios');
       return;
     }
@@ -202,7 +232,14 @@ const Turno = ({ modalVisible, closeModal }) => {
     setIsProcessing(true);
 
     const db = getFirestore();
-    const { date } = determineDateAndShift();
+    // Usar la fecha seleccionada si es FIN, si no la lógica anterior
+    let date;
+    if (turnType === 'FIN' && selectedDate) {
+      const [yyyy, mm, dd] = selectedDate.split('-');
+      date = `${parseInt(dd)}-${parseInt(mm)}-${yyyy}`;
+    } else {
+      date = determineDateAndShift().date;
+    }
 
     // Create or update BASE collection document
     const baseDocRef = doc(db, 'BASE', date);
@@ -249,11 +286,10 @@ const Turno = ({ modalVisible, closeModal }) => {
     setBalances(newBalances);
     setIsProcessing(false);
 
-    // Show appropriate toast message based on turn type
     if (turnType === 'INICIO') {
-      toast.success('Caja abierta con éxito', { autoClose: 1000 }); // Set autoClose to 3 seconds
+      toast.success('Caja abierta con éxito', { autoClose: 1000 });
     } else if (turnType === 'FIN') {
-      toast.success('Cierre de caja con éxito', { autoClose: 1000 }); // Set autoClose to 3 seconds
+      toast.success('Cierre de caja con éxito', { autoClose: 1000 });
     }
 
     setTimeout(() => {
@@ -293,12 +329,25 @@ const generatePDF = async () => {
   setIsProcessing(true);
 
   const pdfDoc = new jsPDF();
-  const orderData = await fetchOrderData(turnTime);
+  // Usar la fecha seleccionada para los datos y el nombre del archivo
+  const orderData = await fetchOrderData(turnTime, selectedDate);
   const pageWidth = pdfDoc.internal.pageSize.getWidth();
 
   // Título principal
   pdfDoc.setFontSize(18);
-  pdfDoc.text(`Informe de Cierre - ${new Date().toLocaleDateString('es-ES')}`, pageWidth / 2, 20, { align: 'center' });
+  pdfDoc.text(
+    `Informe de Cierre - ${
+      selectedDate
+        ? (() => {
+            const [yyyy, mm, dd] = selectedDate.split('-');
+            return `${dd}-${mm}-${yyyy}`;
+          })()
+        : new Date().toLocaleDateString('es-ES')
+    }`,
+    pageWidth / 2,
+    20,
+    { align: 'center' }
+  );
   pdfDoc.setFontSize(14);
   pdfDoc.text(`Turno: ${turnType} | Hora: ${turnTime}`, pageWidth / 2, 28, { align: 'center' });
 
@@ -423,17 +472,30 @@ const generatePDF = async () => {
     { maxWidth: pageWidth - 28 }
   );
 
-  // Guardar PDF con nombre personalizado
-  const pdfName = `CIERRE_INFORME_CAJA_${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`;
+  // Guardar PDF con nombre personalizado usando la fecha seleccionada
+  const pdfName = `CIERRE_INFORME_CAJA_${
+    selectedDate
+      ? (() => {
+          const [yyyy, mm, dd] = selectedDate.split('-');
+          return `${dd}-${mm}-${yyyy}`;
+        })()
+      : new Date().toLocaleDateString('es-ES').replace(/\//g, '-')
+  }.pdf`;
   pdfDoc.save(pdfName);
 
   setIsProcessing(false);
 };
 
 
-const fetchExpenses = async (turnTime) => {
+const fetchExpenses = async (turnTime, customDate) => {
   const db = getFirestore();
-  const { date } = determineDateAndShift(); // Get current date
+  let date;
+  if (customDate) {
+    const [yyyy, mm, dd] = customDate.split('-');
+    date = `${parseInt(dd)}-${parseInt(mm)}-${yyyy}`;
+  } else {
+    date = determineDateAndShift().date;
+  }
   const docRef = doc(db, 'EGRESOS', date);
 
   try {
@@ -454,10 +516,11 @@ const fetchExpenses = async (turnTime) => {
 };
 
 useEffect(() => {
-  if (modalVisible && turnTime) {
-    fetchExpenses(turnTime); // Fetch expenses for the selected turn when the modal is visible
+  if (modalVisible && turnTime && turnType === 'FIN') {
+    fetchExpenses(turnTime, selectedDate);
+    fetchTurnData(turnTime, selectedDate);
   }
-}, [modalVisible, turnTime]);
+}, [modalVisible, turnTime, turnType, selectedDate]);
 
 const generateSummaryReport = () => {
   if (!turnType || !turnTime) {
@@ -517,10 +580,10 @@ Al finalizar el turno, el total recibido en Nequi ascendió a ${formatPrice(fina
 
   return (
     <>
-      <ToastContainer autoClose={3000} /> {/* Set autoClose to 3 seconds */}
+      <ToastContainer autoClose={3000} />
       {modalVisible && (
-        <div className="turno-modal" onClick={closeModal}> {/* Close modal on overlay click */}
-          <div className="turno-modal-content" onClick={(e) => e.stopPropagation()}> {/* Prevent closing when clicking inside content */}
+        <div className="turno-modal" onClick={closeModal}>
+          <div className="turno-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Turno</h2>
             <p>Definir aspectos del turno aquí.</p>
             <form onSubmit={handleSubmit}>
@@ -638,6 +701,17 @@ Al finalizar el turno, el total recibido en Nequi ascendió a ${formatPrice(fina
                       <option value="MORNING">Mañana</option>
                       <option value="NIGHT">Noche</option>
                     </select>
+                  </label>
+                  {/* NUEVO: Selección de fecha */}
+                  <label>
+                    Selecciona fecha:
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      max={new Date().toISOString().split('T')[0]}
+                      onChange={handleDateChange}
+                      required
+                    />
                   </label>
                   <table className="turno-table">
                     <thead>
