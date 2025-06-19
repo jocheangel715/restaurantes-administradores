@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { doc, getDoc, collection, getDocs, query, orderBy, setDoc, where } from 'firebase/firestore'; // Add where
+import { doc, getDoc, collection, getDocs, query, orderBy, setDoc, where, deleteField  } from 'firebase/firestore'; // Add where
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Detalles.css';
-import { FaCartPlus, FaSave } from 'react-icons/fa'; // Import icons
+import { FaCartPlus, FaSave, FaTrash } from 'react-icons/fa'; // Import icons
 import jsPDF from 'jspdf'; // Add this import for PDF generation
 
 const Detalles = ({ order, closeModal }) => {
@@ -21,6 +21,10 @@ const Detalles = ({ order, closeModal }) => {
   const [isDomicilio, setIsDomicilio] = useState(false);
   const [domiciliarioName, setDomiciliarioName] = useState('');
   const [expandedProducts, setExpandedProducts] = useState({});
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [isReassigning, setIsReassigning] = useState(false);
+  const [newDomiciliario, setNewDomiciliario] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -153,7 +157,8 @@ const Detalles = ({ order, closeModal }) => {
   const saveDomicilioOrder = async (date, domiciliario, order) => {
     try {
       const { period } = determineDateAndShift();
-      const domicilioDoc = doc(db, 'DOMICILIOS', date);
+      const docId = date; // Ensure the document ID uses the dd-mm-yyyy format
+      const domicilioDoc = doc(db, 'DOMICILIOS', docId);
       const domicilioSnapshot = await getDoc(domicilioDoc);
 
       let domicilioData = {};
@@ -434,11 +439,152 @@ const Detalles = ({ order, closeModal }) => {
     }));
   };
 
+  // Function to handle order deletion
+  const handleDeleteOrder = async () => {
+    if (!deleteReason.trim()) {
+      toast.error('Por favor, ingrese un motivo para eliminar el pedido.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { date, period } = determineDateAndShift();
+      const docId = date;
+
+      const orderDoc = doc(db, 'PEDIDOS', docId);
+      const orderSnapshot = await getDoc(orderDoc);
+
+      if (orderSnapshot.exists()) {
+        const data = orderSnapshot.data();
+        let orderFound = false;
+
+        if (data[period] && data[period][order.id]) {
+          data[period][order.id].status = 'ELIMINADO';
+
+          await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
+          orderFound = true;
+
+          // Save deletion details in BORRADOS collection
+          const deletedDoc = doc(db, 'BORRADOS', docId); // Use dd-mm-yyyy as document ID
+          await setDoc(deletedDoc, {
+            [new Date().getTime()]: {
+              motivo: deleteReason.toUpperCase(),
+              timestamp: new Date(),
+              ID: order.id,
+            },
+          }, { merge: true });
+        }
+
+        if (orderFound) {
+          toast.success('Pedido eliminado correctamente.');
+          closeModal();
+        } else {
+          toast.error('Pedido no encontrado.');
+        }
+      } else {
+        toast.error('Documento de pedidos no encontrado');
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Error al eliminar el pedido.');
+    } finally {
+      setLoading(false);
+      setIsDeleting(false);
+      setDeleteReason('');
+    }
+  };
+
+  const handleReassignOrder = async () => {
+    if (!newDomiciliario) {
+      toast.error('Seleccione un nuevo domiciliario.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { date, period } = determineDateAndShift();
+      const docId = date;
+      // 1. Eliminar el pedido del domiciliario anterior (N)
+      const domicilioDoc = doc(db, 'DOMICILIOS', docId);
+      const domicilioSnapshot = await getDoc(domicilioDoc);
+      if (domicilioSnapshot.exists()) {
+        const domicilioData = domicilioSnapshot.data();
+        if (
+          order.domiciliario &&
+          domicilioData[order.domiciliario] &&
+          domicilioData[order.domiciliario][period]
+        ) {
+          // El pedido puede estar bajo order.id o order.idPedido
+          const prevId =
+            domicilioData[order.domiciliario][period][order.idPedido]
+              ? order.idPedido
+              : order.id;
+          if (domicilioData[order.domiciliario][period][prevId]) {
+            delete domicilioData[order.domiciliario][period][prevId];
+            // Limpieza si queda vacío
+            if (Object.keys(domicilioData[order.domiciliario][period]).length === 0) {
+              delete domicilioData[order.domiciliario][period];
+            }
+            if (Object.keys(domicilioData[order.domiciliario]).length === 0) {
+              delete domicilioData[order.domiciliario];
+            }
+            await setDoc(domicilioDoc, domicilioData, { merge: true });
+          }
+        }
+      }
+      // 2. Agregar el pedido al nuevo domiciliario (S)
+      await saveDomicilioOrder(date, newDomiciliario, order);
+      // 3. Actualizar el domiciliario en PEDIDOS
+      const orderDoc = doc(db, 'PEDIDOS', docId);
+      const orderSnapshot = await getDoc(orderDoc);
+      if (orderSnapshot.exists()) {
+        const data = orderSnapshot.data();
+        if (data[period] && data[period][order.id]) {
+          data[period][order.id].domiciliario = newDomiciliario;
+          await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
+        }
+      }
+      toast.success('Pedido reasignado correctamente.');
+      setIsReassigning(false);
+      setNewDomiciliario('');
+      closeModal();
+    } catch (error) {
+      console.error('Error al reasignar el pedido:', error);
+      toast.error('Error al reasignar el pedido.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isReassigning) {
+      fetchDomiciliarios();
+    }
+  }, [isReassigning]);
+
   return (
     <div className="detalles-container">
       <ToastContainer />
       <div className="detalles-overlay" onClick={closeModal}></div>
-      <div className="detalles-modal">
+      <div
+        className="detalles-modal"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          overflowY: 'auto',
+        }}
+      >
+        <style>
+          {`
+            .detalles-modal::-webkit-scrollbar,
+            .productos-modal::-webkit-scrollbar,
+            .ingredientes-modal::-webkit-scrollbar,
+            .delete-modal::-webkit-scrollbar {
+              display: none !important;
+              width: 0 !important;
+              background: transparent !important;
+            }
+          `}
+        </style>
         <div className="detalles-modal-content">
           <span className="detalles-close" onClick={closeModal}>&times;</span>
           <h2>Detalles del Pedido</h2>
@@ -487,10 +633,49 @@ const Detalles = ({ order, closeModal }) => {
             <button className="detalles-button" onClick={handleSaveOrder} disabled={loading}>
               {loading ? 'Procesando...' : <><FaSave /> Guardar Pedido</>}
             </button>
+            <button className="detalles-button" onClick={() => setIsDeleting(true)} disabled={loading}>
+              {loading ? 'Procesando...' : <><FaTrash /> Eliminar Pedido</>}
+            </button>
           </div>
           <div className="domicilio-section">
             {order.domiciliario ? (
-              <p className="domicilio-texto-blanco">Domicilio asignado a {domiciliarioName}</p>
+              <>
+                <p className="domicilio-texto-blanco">Domicilio asignado a {domiciliarioName}</p>
+                <label className="domicilio-label" style={{ marginTop: '10px' }}>
+                  <input
+                    type="checkbox"
+                    checked={isReassigning}
+                    onChange={() => setIsReassigning(!isReassigning)}
+                    style={{ marginRight: '8px' }}
+                  />
+                  Reasignar domiciliario
+                </label>
+                {isReassigning && (
+                  <>
+                    <select
+                      className="domiciliario-select"
+                      value={newDomiciliario}
+                      onChange={(e) => setNewDomiciliario(e.target.value)}
+                    >
+                      <option value="">Seleccionar nuevo domiciliario</option>
+                      {domiciliarios
+                        .filter((d) => d.id !== order.domiciliario)
+                        .map((domiciliario) => (
+                          <option key={domiciliario.id} value={domiciliario.id}>
+                            {domiciliario.name}
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      className="detalles-button"
+                      onClick={handleReassignOrder}
+                      disabled={loading}
+                    >
+                      {loading ? 'Procesando...' : 'Reasignar'}
+                    </button>
+                  </>
+                )}
+              </>
             ) : (
               <>
                 <label className="domicilio-label">
@@ -592,6 +777,28 @@ const Detalles = ({ order, closeModal }) => {
                   </label>
                 </div>
               ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Modal de eliminación de pedido */}
+      {isDeleting && (
+        <>
+          <div className="delete-overlay" onClick={() => setIsDeleting(false)}></div>
+          <div className="delete-modal">
+            <div className="delete-modal-content">
+              <span className="delete-close" onClick={() => setIsDeleting(false)}>&times;</span>
+              <h2>Eliminar Pedido</h2>
+              <textarea
+                className="delete-reason-input"
+                placeholder="Ingrese el motivo para eliminar el pedido..."
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+              />
+              <button className="detalles-button" onClick={handleDeleteOrder} disabled={loading}>
+                {loading ? 'Procesando...' : 'Guardar'}
+              </button>
             </div>
           </div>
         </>
