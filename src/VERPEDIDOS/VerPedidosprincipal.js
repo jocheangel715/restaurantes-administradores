@@ -204,10 +204,19 @@ const VerPedidos = () => {
               statusClass = 'en-cocina';
               break;
             case 'EMPACADO':
-              statusClass = 'EMPACADO';
+              statusClass = 'empacado';
               break;
             case 'ENDOMICILIO':
               statusClass = 'domicilio';
+              break;
+            case 'ENTREGADO':
+              statusClass = 'entregado';
+              break;
+            case 'CANCELADO':
+              statusClass = 'cancelado';
+              break;
+            case 'ELIMINADO':
+              statusClass = 'eliminado';
               break;
             default:
               break;
@@ -221,6 +230,10 @@ const VerPedidos = () => {
               <h3>Pedido #{order.idPedido}</h3>
               {order.tableNumber && <p><strong>Mesa:</strong> {order.tableNumber}</p>} {/* Display table number if available */}
               <p><strong>Cliente:</strong> {order.clientName}</p>
+              <p><strong>Método de Pago:</strong> {order.paymentMethod}
+                {order.paymentMethod === 'NEQUI' && order.pagoConfirmado === true && ' ✅'}
+                {order.paymentMethod === 'NEQUI' && (order.pagoConfirmado === undefined || order.pagoConfirmado === false) && ' ❌'}
+              </p>
               <p><strong>Teléfono:</strong> {order.clientPhone}</p>
               <p><strong>Dirección:</strong> {order.clientAddress} - {order.clientBarrio}</p>
               <p><strong>Total:</strong> {formatPrice(order.total)}</p>

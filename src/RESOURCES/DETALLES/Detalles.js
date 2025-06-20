@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { doc, getDoc, collection, getDocs, query, orderBy, setDoc, where, deleteField  } from 'firebase/firestore'; // Add where
+import { doc, getDoc, collection, getDocs, query, orderBy, setDoc, where, deleteField, updateDoc  } from 'firebase/firestore'; // Add where
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Detalles.css';
-import { FaCartPlus, FaSave, FaTrash } from 'react-icons/fa'; // Import icons
+import { FaCartPlus, FaSave, FaTrash, FaUtensils, FaBoxOpen, FaCheckCircle, FaMotorcycle } from 'react-icons/fa'; // Import icons
 import jsPDF from 'jspdf'; // Add this import for PDF generation
 
 const Detalles = ({ order, closeModal }) => {
@@ -495,71 +495,123 @@ const Detalles = ({ order, closeModal }) => {
   };
 
   const handleReassignOrder = async () => {
-    if (!newDomiciliario) {
-      toast.error('Seleccione un nuevo domiciliario.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const { date, period } = determineDateAndShift();
-      const docId = date;
-      // 1. Eliminar el pedido del domiciliario anterior (N)
-      const domicilioDoc = doc(db, 'DOMICILIOS', docId);
-      const domicilioSnapshot = await getDoc(domicilioDoc);
-      if (domicilioSnapshot.exists()) {
-        const domicilioData = domicilioSnapshot.data();
+  if (!newDomiciliario) {
+    toast.error('Seleccione un nuevo domiciliario.');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const { date, period } = determineDateAndShift();
+    const docId = date;
+
+    // 1. Eliminar el pedido del domiciliario anterior
+    const domicilioDoc = doc(db, 'DOMICILIOS', docId);
+    const domicilioSnapshot = await getDoc(domicilioDoc);
+
+    if (domicilioSnapshot.exists()) {
+      const domicilioData = domicilioSnapshot.data();
+
+      if (
+        order.domiciliario &&
+        domicilioData[order.domiciliario] &&
+        domicilioData[order.domiciliario][period]
+      ) {
+        const prevId =
+          domicilioData[order.domiciliario][period][order.idPedido]
+            ? order.idPedido
+            : order.id;
+
+        const pathToOrder = `${order.domiciliario}.${period}.${prevId}`;
+        const updates = {
+          [pathToOrder]: deleteField()
+        };
+
+        // Verificar si queda vacío el turno (ej: MORNING)
+        const periodOrders = domicilioData[order.domiciliario][period];
+        delete periodOrders[prevId];
+
+        if (Object.keys(periodOrders).length === 0) {
+          updates[`${order.domiciliario}.${period}`] = deleteField();
+        }
+
+        // Verificar si queda vacío el domiciliario
+        const domiciliarioData = domicilioData[order.domiciliario];
+        delete domiciliarioData[period];
+
         if (
-          order.domiciliario &&
           domicilioData[order.domiciliario] &&
-          domicilioData[order.domiciliario][period]
+          Object.keys(domicilioData[order.domiciliario]).length === 0
         ) {
-          // El pedido puede estar bajo order.id o order.idPedido
-          const prevId =
-            domicilioData[order.domiciliario][period][order.idPedido]
-              ? order.idPedido
-              : order.id;
-          if (domicilioData[order.domiciliario][period][prevId]) {
-            delete domicilioData[order.domiciliario][period][prevId];
-            // Limpieza si queda vacío
-            if (Object.keys(domicilioData[order.domiciliario][period]).length === 0) {
-              delete domicilioData[order.domiciliario][period];
-            }
-            if (Object.keys(domicilioData[order.domiciliario]).length === 0) {
-              delete domicilioData[order.domiciliario];
-            }
-            await setDoc(domicilioDoc, domicilioData, { merge: true });
-          }
+          updates[`${order.domiciliario}`] = deleteField();
         }
+
+        await updateDoc(domicilioDoc, updates);
       }
-      // 2. Agregar el pedido al nuevo domiciliario (S)
-      await saveDomicilioOrder(date, newDomiciliario, order);
-      // 3. Actualizar el domiciliario en PEDIDOS
-      const orderDoc = doc(db, 'PEDIDOS', docId);
-      const orderSnapshot = await getDoc(orderDoc);
-      if (orderSnapshot.exists()) {
-        const data = orderSnapshot.data();
-        if (data[period] && data[period][order.id]) {
-          data[period][order.id].domiciliario = newDomiciliario;
-          await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
-        }
-      }
-      toast.success('Pedido reasignado correctamente.');
-      setIsReassigning(false);
-      setNewDomiciliario('');
-      closeModal();
-    } catch (error) {
-      console.error('Error al reasignar el pedido:', error);
-      toast.error('Error al reasignar el pedido.');
-    } finally {
-      setLoading(false);
     }
-  };
+
+    // 2. Agregar el pedido al nuevo domiciliario
+    await saveDomicilioOrder(date, newDomiciliario, order);
+
+    // 3. Actualizar el domiciliario en PEDIDOS
+    const orderDoc = doc(db, 'PEDIDOS', docId);
+    const orderSnapshot = await getDoc(orderDoc);
+
+    if (orderSnapshot.exists()) {
+      const data = orderSnapshot.data();
+      if (data[period] && data[period][order.id]) {
+        data[period][order.id].domiciliario = newDomiciliario;
+        await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
+      }
+    }
+
+    toast.success('Pedido reasignado correctamente.');
+    setIsReassigning(false);
+    setNewDomiciliario('');
+    closeModal();
+  } catch (error) {
+    console.error('Error al reasignar el pedido:', error);
+    toast.error('Error al reasignar el pedido.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (isReassigning) {
       fetchDomiciliarios();
     }
   }, [isReassigning]);
+
+  // Función para confirmar el pago
+  const handleConfirmarPago = async () => {
+    setLoading(true);
+    try {
+      const { date, period } = determineDateAndShift();
+      const docId = date;
+      const orderDoc = doc(db, 'PEDIDOS', docId);
+      const orderSnapshot = await getDoc(orderDoc);
+      if (orderSnapshot.exists()) {
+        const data = orderSnapshot.data();
+        if (data[period] && data[period][order.id]) {
+          data[period][order.id].pagoConfirmado = true;
+          await setDoc(orderDoc, { [period]: data[period] }, { merge: true });
+          toast.success('Pago confirmado');
+          closeModal();
+        } else {
+          toast.error('Pedido no encontrado');
+        }
+      } else {
+        toast.error('Documento de pedidos no encontrado');
+      }
+    } catch (error) {
+      console.error('Error al confirmar el pago:', error);
+      toast.error('Error al confirmar el pago');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="detalles-container">
@@ -622,10 +674,10 @@ const Detalles = ({ order, closeModal }) => {
           </div>
           <div className="button-container">
             <button className="detalles-button" onClick={handleLlamadoEnCocina} disabled={loading}>
-              {loading ? 'Procesando...' : 'LLAMADO EN COCINA'}
+              {loading ? 'Procesando...' : <><FaUtensils /> LLAMADO EN COCINA</>}
             </button>
             <button className="detalles-button" onClick={handleEmpacado} disabled={loading}>
-              {loading ? 'Procesando...' : 'EMPACADO'}
+              {loading ? 'Procesando...' : <><FaBoxOpen /> EMPACADO</>}
             </button>
             <button className="detalles-button" onClick={handleAgregarProductos} disabled={loading}>
               {loading ? 'Procesando...' : <><FaCartPlus /> Agregar más productos</>}
@@ -633,8 +685,11 @@ const Detalles = ({ order, closeModal }) => {
             <button className="detalles-button" onClick={handleSaveOrder} disabled={loading}>
               {loading ? 'Procesando...' : <><FaSave /> Guardar Pedido</>}
             </button>
-            <button className="detalles-button" onClick={() => setIsDeleting(true)} disabled={loading}>
+            <button className="detalles-button hidden" onClick={() => setIsDeleting(true)} disabled={loading}>
               {loading ? 'Procesando...' : <><FaTrash /> Eliminar Pedido</>}
+            </button>
+            <button className="detalles-button" onClick={handleConfirmarPago} disabled={loading}>
+              {loading ? 'Procesando...' : <><FaCheckCircle /> Confirmar Pago</>}
             </button>
           </div>
           <div className="domicilio-section">
@@ -701,7 +756,7 @@ const Detalles = ({ order, closeModal }) => {
                       ))}
                     </select>
                     <button className="detalles-button" onClick={handleEnDomicilio} disabled={loading}>
-                      {loading ? 'Procesando...' : 'ENDOMICILIO'}
+                      {loading ? 'Procesando...' : <><FaMotorcycle /> ENDOMICILIO</>}
                     </button>
                   </>
                 )}

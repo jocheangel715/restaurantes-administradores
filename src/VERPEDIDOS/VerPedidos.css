@@ -85,22 +85,37 @@
 
 /* Estilo para PEDIDOTOMADO */
 .verpedidos-order-item.pedido-tomado {
-  background: linear-gradient(135deg, #ff4b4b, #ff0000); /* Rojo */
+  background: linear-gradient(135deg, #ff4b4b, #c62828); /* Rojo intenso */
 }
 
 /* Estilo para ENCOCINA */
 .verpedidos-order-item.en-cocina {
-  background: linear-gradient(135deg, #ffeb3b, #ffc107); /* Amarillo */
+  background: linear-gradient(135deg, #ff9800, #ffa726); /* Naranja vibrante */
 }
 
 /* Estilo para EMPACADO */
-.verpedidos-order-item.EMPACADO {
-  background: linear-gradient(135deg, #2196F3, #0D47A1); /* Azul */
+.verpedidos-order-item.empacado {
+  background: linear-gradient(135deg, #2196f3, #0d47a1); /* Azul profesional */
 }
 
-/* Estilo para DOMICILIO */
+/* Estilo para ENDOMICILIO */
 .verpedidos-order-item.domicilio {
-  background: linear-gradient(135deg, #4caf50, #2e7d32); /* Verde */
+  background: linear-gradient(135deg, #4caf50, #2e7d32); /* Verde éxito */
+}
+
+/* Estilo para ENTREGADO */
+.verpedidos-order-item.entregado {
+  background: linear-gradient(135deg, #81c784, #66bb6a); /* Verde claro */
+}
+
+/* Estilo para CANCELADO */
+.verpedidos-order-item.cancelado {
+  background: linear-gradient(135deg, #757575, #b71c1c); /* Gris oscuro / rojo opaco */
+}
+
+/* Estilo para ELIMINADO */
+.verpedidos-order-item.eliminado {
+  background: linear-gradient(135deg, #b71c1c, #616161); /* Gris con rojo */
 }
 
 .verpedidos-order-item:hover {
