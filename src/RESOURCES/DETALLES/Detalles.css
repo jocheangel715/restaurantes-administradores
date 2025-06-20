@@ -156,7 +156,7 @@
 
 .button-container button {
   flex: 0 0 calc(25% - 10px); /* 4 por fila, restando el espacio del gap */
-  height: 50px; /* altura fija */
+  height: 100px; /* altura fija */
   min-width: 100px; /* opcional, puedes ajustar */
   max-width: 100%; /* asegura que no se salga */
   box-sizing: border-box; /* incluye padding y border en el cálculo del ancho */
