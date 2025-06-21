@@ -1,11 +1,11 @@
 import React from 'react';
-import './Carga.css'; // Assuming you have a CSS file for styling
+import './Carga.css';
 
 const Carga = () => {
   return (
     <div className="carga-container">
       <div className="spinner"></div>
-      <p>Loading...</p>
+      <p>Cargando...</p>
     </div>
   );
 };

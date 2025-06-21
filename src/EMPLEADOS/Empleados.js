@@ -6,6 +6,7 @@ import { db } from '../firebase';
 import { doc, setDoc, collection, getDocs, query, orderBy, limit, deleteDoc } from 'firebase/firestore';
 import ConfirmationDelete from '../RESOURCES/THEMES/CONFIRMATIONDELETE/ConfirmationDelete';
 import { FaEdit, FaTrash } from 'react-icons/fa'; // Import icons
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 const formatPrice = (value) => {
   if (value === null || value === undefined || value === '') return '0';
@@ -14,23 +15,21 @@ const formatPrice = (value) => {
   return `$${numberValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 };
 
-const Clientes = ({ modalVisible, closeModal }) => {
-  const [client, setClient] = useState({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', barrio: '', deliveryPrice: '', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
-  const [clients, setClients] = useState([]);
-  const [barrios, setBarrios] = useState([]); // State for barrios
+const Empleados = ({ modalVisible, closeModal }) => {
+  const [empleado, setEmpleado] = useState({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
+  const [empleados, setEmpleados] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
     if (modalVisible) {
-      fetchLastClientId();
-      fetchClients();
-      fetchBarrios(); // Fetch barrios when modal is visible
+      fetchLastEmpleadoId();
+      fetchEmpleados();
     }
   }, [modalVisible]);
 
-  const fetchLastClientId = async () => {
+  const fetchLastEmpleadoId = async () => {
     try {
       const q = query(collection(db, 'EMPLEADOS'), orderBy('id', 'desc'), limit(1));
       const querySnapshot = await getDocs(q);
@@ -38,13 +37,13 @@ const Clientes = ({ modalVisible, closeModal }) => {
       querySnapshot.forEach((doc) => {
         lastId = parseInt(doc.data().id, 10);
       });
-      setClient((prevClient) => ({ ...prevClient, id: (lastId + 1).toString().padStart(8, '0') }));
+      setEmpleado((prevEmpleado) => ({ ...prevEmpleado, id: (lastId + 1).toString().padStart(8, '0') }));
     } catch (error) {
-      console.error('Error fetching last client ID:', error);
+      console.error('Error fetching last empleado ID:', error);
     }
   };
 
-  const fetchClients = async () => {
+  const fetchEmpleados = async () => {
     try {
       const q = query(collection(db, 'EMPLEADOS'), orderBy('id', 'asc'));
       const querySnapshot = await getDocs(q);
@@ -52,43 +51,24 @@ const Clientes = ({ modalVisible, closeModal }) => {
       querySnapshot.forEach((doc) => {
         items.push(doc.data());
       });
-      setClients(items);
+      setEmpleados(items);
     } catch (error) {
-      console.error('Error fetching clients:', error);
-    }
-  };
-
-  const fetchBarrios = async () => {
-    try {
-      const q = query(collection(db, 'BARRIOS'), orderBy('name', 'asc'));
-      const querySnapshot = await getDocs(q);
-      const items = [];
-      querySnapshot.forEach((doc) => {
-        items.push(doc.data());
-      });
-      setBarrios(items);
-    } catch (error) {
-      console.error('Error fetching barrios:', error);
+      console.error('Error fetching empleados:', error);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setClient({ ...client, [name]: value });
-
-    if (name === 'barrio') {
-      const selectedBarrio = barrios.find(barrio => barrio.name === value);
-      setClient({ ...client, barrio: value, deliveryPrice: selectedBarrio ? selectedBarrio.deliveryPrice : '' });
-    }
+    setEmpleado({ ...empleado, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { role, name, phone, address, barrio, deliveryPrice, salary, scheduleStart, scheduleEnd, email } = client;
+    const { role, name, phone, address, salary, scheduleStart, scheduleEnd, email } = empleado;
 
     if (role === 'CLIENTE') {
-      if (!name || !phone || !address || !barrio || !email) {
-        toast.error("Por favor complete todos los campos obligatorios para el cliente.");
+      if (!name || !phone || !address || !email) {
+        toast.error("Por favor complete todos los campos obligatorios para el empleado.");
         return;
       }
     } else {
@@ -99,20 +79,22 @@ const Clientes = ({ modalVisible, closeModal }) => {
     }
 
     try {
-      const { phoneCountryCode, ...clientData } = client;
-      const formattedClient = {
-        ...clientData,
-        phone: `${client.phoneCountryCode}${client.phone.replace(client.phoneCountryCode, '')}`,
-        salary: client.salary.replace(/[^0-9.]/g, ''),
-        schedule: `${client.scheduleStart}-${client.scheduleEnd}`
+      // Registrar en Firebase Authentication
+      const auth = getAuth();
+      const password = email.split('@')[0];
+      await createUserWithEmailAndPassword(auth, email, password);
+      const { phoneCountryCode, ...empleadoData } = empleado;
+      const formattedEmpleado = {
+        ...empleadoData,
+        phone: `${empleado.phoneCountryCode}${empleado.phone.replace(empleado.phoneCountryCode, '')}`,
+        salary: empleado.salary.replace(/[^0-9.]/g, ''),
+        schedule: `${empleado.scheduleStart}-${empleado.scheduleEnd}`
       };
-      await setDoc(doc(db, "EMPLEADOS", client.id), formattedClient);
-      toast.success("Cliente registrado correctamente");
-      fetchClients();
+      await setDoc(doc(db, "EMPLEADOS", empleado.id), formattedEmpleado);
+      toast.success("Empleado registrado correctamente");
+      fetchEmpleados();
       handleBack();
     } catch (error) {
-      console.error("Error al registrar el cliente:", error);
-      toast.error("Error al registrar el cliente");
     }
   };
 
@@ -120,7 +102,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
     const [scheduleStart, scheduleEnd] = item.schedule.split('-');
     const phoneCountryCode = item.phone.slice(0, item.phone.indexOf(item.phone.match(/\d/)));
     const phone = item.phone.slice(item.phone.indexOf(item.phone.match(/\d/)));
-    setClient({ ...item, scheduleStart, scheduleEnd, phoneCountryCode, phone });
+    setEmpleado({ ...item, scheduleStart, scheduleEnd, phoneCountryCode, phone });
     setIsAdding(true);
   };
 
@@ -132,11 +114,11 @@ const Clientes = ({ modalVisible, closeModal }) => {
   const confirmDelete = async () => {
     try {
       await deleteDoc(doc(db, 'EMPLEADOS', deleteId));
-      toast.success('Cliente eliminado correctamente');
-      fetchClients();
+      toast.success('Empleado eliminado correctamente');
+      fetchEmpleados();
     } catch (error) {
-      console.error('Error al eliminar el cliente:', error);
-      toast.error('Error al eliminar el cliente');
+      console.error('Error al eliminar el empleado:', error);
+      toast.error('Error al eliminar el empleado');
     } finally {
       setShowConfirmation(false);
       setDeleteId(null);
@@ -150,13 +132,13 @@ const Clientes = ({ modalVisible, closeModal }) => {
 
   const handleBack = () => {
     setIsAdding(false);
-    setClient({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', barrio: '', deliveryPrice: '', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
+    setEmpleado({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', address: '', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
   };
 
   const handleAdd = () => {
-    fetchLastClientId();
+    fetchLastEmpleadoId();
     setIsAdding(true);
-    setClient({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
+    setEmpleado({ id: '', name: '', role: '', phone: '', phoneCountryCode: '+1', salary: '', scheduleStart: '', scheduleEnd: '', email: '' });
   };
 
   const handleCloseModal = () => {
@@ -176,57 +158,57 @@ const Clientes = ({ modalVisible, closeModal }) => {
   };
 
   return (
-    <div className="clients-container">
+    <div className="empleados-container">
       <ToastContainer />
       {modalVisible && (
         <>
-          <div className="clients-overlay" onClick={handleCloseModal}></div>
-          <div className="clients-modal">
-            <div className="clients-modal-content">
-              <span className="clients-close" onClick={handleCloseModal}>&times;</span>
-              <h2 className="modal-header">Administrar Clientes</h2>
+          <div className="empleados-overlay" onClick={handleCloseModal}></div>
+          <div className="empleados-modal">
+            <div className="empleados-modal-content">
+              <span className="empleados-close" onClick={handleCloseModal}>&times;</span>
+              <h2 className="modal-header">Administrar Empleados</h2>
               {isAdding ? (
                 <>
-                  <form className="clients-form" onSubmit={handleSubmit}>
-                    <div className="clients-form-group">
-                      <label className="clients-label">ID:</label>
+                  <form className="empleados-form" onSubmit={handleSubmit}>
+                    <div className="empleados-form-group">
+                      <label className="empleados-label">ID:</label>
                       <input
-                        className="clients-input"
+                        className="empleados-input"
                         type="text"
                         name="id"
-                        value={client.id}
+                        value={empleado.id}
                         onChange={handleInputChange}
                         readOnly
                       />
                     </div>
-                    <div className="clients-form-group">
-                      <label className="clients-label">Nombre:</label>
+                    <div className="empleados-form-group">
+                      <label className="empleados-label">Nombre:</label>
                       <input
-                        className="clients-input"
+                        className="empleados-input"
                         type="text"
                         name="name"
-                        value={client.name}
+                        value={empleado.name}
                         onChange={handleInputChange}
                         required
                       />
                     </div>
-                    <div className="clients-form-group">
-                      <label className="clients-label">Email:</label>
+                    <div className="empleados-form-group">
+                      <label className="empleados-label">Email:</label>
                       <input
-                        className="clients-input"
+                        className="empleados-input"
                         type="email"
                         name="email"
-                        value={client.email}
+                        value={empleado.email}
                         onChange={handleInputChange}
                         required
                       />
                     </div>
-                    <div className="clients-form-group">
-                      <label className="clients-label">Rol:</label>
+                    <div className="empleados-form-group">
+                      <label className="empleados-label">Rol:</label>
                       <select
-                        className="clients-input"
+                        className="empleados-input"
                         name="role"
-                        value={client.role}
+                        value={empleado.role}
                         onChange={handleInputChange}
                         required
                       >
@@ -237,13 +219,13 @@ const Clientes = ({ modalVisible, closeModal }) => {
                         <option value="MESERO">MESERO</option>
                       </select>
                     </div>
-                    <div className="clients-form-group">
-                      <label className="clients-label">Teléfono:</label>
+                    <div className="empleados-form-group">
+                      <label className="empleados-label">Teléfono:</label>
                       <div className="phone-container">
                         <select
                           className="phone-country-code"
                           name="phoneCountryCode"
-                          value={client.phoneCountryCode}
+                          value={empleado.phoneCountryCode}
                           onChange={handleInputChange}
                           required
                         >
@@ -254,65 +236,50 @@ const Clientes = ({ modalVisible, closeModal }) => {
                           {/* Add more country codes as needed */}
                         </select>
                         <input
-                          className="clients-input phone-number"
+                          className="empleados-input phone-number"
                           type="text"
                           name="phone"
-                          value={client.phone.replace(client.phoneCountryCode, '')}
+                          value={empleado.phone.replace(empleado.phoneCountryCode, '')}
                           onChange={handleInputChange}
                           required
                         />
                       </div>
                     </div>
-                    {client.role === 'CLIENTE' && (
+                    {empleado.role === 'CLIENTE' && (
                       <>
-                        <div className="clients-form-group">
-                          <label className="clients-label">Dirección:</label>
+                        <div className="empleados-form-group">
+                          <label className="empleados-label">Dirección:</label>
                           <input
-                            className="clients-input"
+                            className="empleados-input"
                             type="text"
                             name="address"
-                            value={client.address}
+                            value={empleado.address}
                             onChange={handleInputChange}
                             required
                           />
-                        </div>
-                        <div className="clients-form-group">
-                          <label className="clients-label">Barrio:</label>
-                          <select
-                            className="clients-input"
-                            name="barrio"
-                            value={client.barrio}
-                            onChange={handleInputChange}
-                            required
-                          >
-                            <option value="">Seleccionar barrio</option>
-                            {barrios.map((barrio) => (
-                              <option key={barrio.id} value={barrio.name}>{barrio.name} - {formatPrice(barrio.deliveryPrice)}</option>
-                            ))}
-                          </select>
                         </div>
                       </>
                     )}
-                    {client.role !== 'CLIENTE' && (
+                    {empleado.role !== 'CLIENTE' && (
                       <>
-                        <div className="clients-form-group">
-                          <label className="clients-label">Sueldo:</label>
+                        <div className="empleados-form-group">
+                          <label className="empleados-label">Sueldo:</label>
                           <input
-                            className="clients-input"
+                            className="empleados-input"
                             type="text"
                             name="salary"
-                            value={formatPrice(client.salary)}
+                            value={formatPrice(empleado.salary)}
                             onChange={handleInputChange}
                             required
                           />
                         </div>
-                        <div className="clients-form-group">
-                          <label className="clients-label">Horario:</label>
+                        <div className="empleados-form-group">
+                          <label className="empleados-label">Horario:</label>
                           <div className="schedule-container">
                             <select
-                              className="clients-input schedule-select"
+                              className="empleados-input schedule-select"
                               name="scheduleStart"
-                              value={client.scheduleStart}
+                              value={empleado.scheduleStart}
                               onChange={handleInputChange}
                               required
                             >
@@ -322,9 +289,9 @@ const Clientes = ({ modalVisible, closeModal }) => {
                               ))}
                             </select>
                             <select
-                              className="clients-input schedule-select"
+                              className="empleados-input schedule-select"
                               name="scheduleEnd"
-                              value={client.scheduleEnd}
+                              value={empleado.scheduleEnd}
                               onChange={handleInputChange}
                               required
                             >
@@ -337,16 +304,16 @@ const Clientes = ({ modalVisible, closeModal }) => {
                         </div>
                       </>
                     )}
-                    <button className="clients-button" type="submit">Guardar</button>
-                    <button className="clients-button" type="button" onClick={handleBack}>Atrás</button>
+                    <button className="empleados-button" type="submit">Guardar</button>
+                    <button className="empleados-button" type="button" onClick={handleBack}>Atrás</button>
                   </form>
                 </>
               ) : (
                 <>
-                  <button className="clients-button" onClick={handleAdd}>Agregar</button>
-                  <div className="clients-list">
-                    {clients.map((item) => (
-                      <div key={item.id} className="clients-item">
+                  <button className="empleados-button" onClick={handleAdd}>Agregar</button>
+                  <div className="empleados-list">
+                    {empleados.map((item) => (
+                      <div key={item.id} className="empleados-item">
                         <span>{item.name}</span>
                         <div className="button-container">
                           <button onClick={() => handleEdit(item)}><FaEdit /></button>
@@ -364,7 +331,7 @@ const Clientes = ({ modalVisible, closeModal }) => {
       {showConfirmation && (
         <ConfirmationDelete
           title="Confirmar eliminación"
-          message="¿Estás seguro de que deseas eliminar este cliente?"
+          message="¿Estás seguro de que deseas eliminar este empleado?"
           onConfirm={confirmDelete}
           onCancel={cancelDelete}
         />
@@ -373,4 +340,4 @@ const Clientes = ({ modalVisible, closeModal }) => {
   );
 };
 
-export default Clientes;
+export default Empleados;

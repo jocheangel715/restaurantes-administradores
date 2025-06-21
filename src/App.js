@@ -11,7 +11,7 @@ import './App.css'; // Assuming you have a CSS file for styling
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false); // State to check if user is admin
+  const [isAdmin, setIsAdmin] = useState(null); // null: no determinado, true: admin, false: mesero
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -21,16 +21,18 @@ function App() {
         const adminDocRef = doc(db, 'ADMINISTRADORES', user.email);
         const adminDoc = await getDoc(adminDocRef);
         setIsAdmin(adminDoc.exists());
+        setLoading(false);
       } else {
         setUser(null);
+        setIsAdmin(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
+  if (loading || (user && isAdmin === null)) {
     return <Carga />;
   }
 

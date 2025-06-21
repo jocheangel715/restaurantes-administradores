@@ -672,7 +672,7 @@ const Detalles = ({ order, closeModal }) => {
               </div>
             ))}
           </div>
-          <div className="button-container">
+          <div className="detalles-button-container">
             <button className="detalles-button" onClick={handleLlamadoEnCocina} disabled={loading}>
               {loading ? 'Procesando...' : <><FaUtensils /> LLAMADO EN COCINA</>}
             </button>
@@ -685,7 +685,7 @@ const Detalles = ({ order, closeModal }) => {
             <button className="detalles-button" onClick={handleSaveOrder} disabled={loading}>
               {loading ? 'Procesando...' : <><FaSave /> Guardar Pedido</>}
             </button>
-            <button className="detalles-button hidden" onClick={() => setIsDeleting(true)} disabled={loading}>
+            <button className="detalles-button" onClick={() => setIsDeleting(true)} disabled={loading}>
               {loading ? 'Procesando...' : <><FaTrash /> Eliminar Pedido</>}
             </button>
             <button className="detalles-button" onClick={handleConfirmarPago} disabled={loading}>

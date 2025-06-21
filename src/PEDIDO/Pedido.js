@@ -283,6 +283,7 @@ const Pedido = ({ modalVisible, closeModal }) => {
           total: total, // Save the calculated total
           timestamp: Timestamp.now(),
           pedidotomado: userName, // Add the authenticated user's name
+          ...(paymentMethod === 'CUENTA' && { pagado: false }) // Add pagado: false if paymentMethod is CUENTA
         };
   
         const { date, period } = determineDateAndShift();
@@ -298,6 +299,17 @@ const Pedido = ({ modalVisible, closeModal }) => {
         }, { merge: true });
   
         toast.success("Pedido registrado correctamente");
+        // Si el método de pago es CUENTA, registrar en la colección CUENTAS
+        if (paymentMethod === 'CUENTA') {
+          const cuentaDocRef = doc(db, 'CUENTAS', client.id);
+          const now = new Date();
+          const fechaCuenta = `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
+          await setDoc(cuentaDocRef, {
+            [fechaCuenta]: {
+              [uniqueOrderId]: { ...orderData, pagado: false }
+            }
+          }, { merge: true });
+        }
       } else {
         // Handle proveedor order logic here
       }
@@ -730,6 +742,7 @@ const handleObservationModal = (product, index) => {
                           <option value="">Seleccionar método de pago</option>
                           <option value="NEQUI">NEQUI</option>
                           <option value="EFECTIVO">EFECTIVO</option>
+                          <option value="CUENTA">CUENTA</option>
                         </select>
                       </div>
                       {paymentMethod === 'EFECTIVO' && (

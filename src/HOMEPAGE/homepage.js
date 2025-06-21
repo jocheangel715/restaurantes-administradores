@@ -4,7 +4,7 @@ import { app } from '../firebase';
 import './homepage.css';
 import { FaSignOutAlt, FaBoxOpen, FaUsers, FaMapMarkerAlt, FaTruck, FaUtensils, FaClipboardList, FaClock } from 'react-icons/fa'; // Import FaClock icon
 import Inventory from '../INVENTARIO/Inventory';
-import Clientes from '../EMPLEADOS/Empleados';
+import Clientes from '../CLIENTES/Clientes';
 import Barrios from '../BARRIOS/Barrios';
 import Proveedores from '../PROVEEDORES/Proveedores';
 import Productos from '../PRODUCTOS/Productos';
@@ -13,6 +13,7 @@ import VerPedidos from '../VERPEDIDOS/VerPedidosprincipal'; // Import VerPedidos
 import Turno from '../TURNO/Turno'; // Import Turno component
 import PedidoMesero from '../MESERO/PedidoMesero'; // Import PedidoMesero component
 import ExpensesForm from '../EGRESOS/ExpensesForm'; // Import ExpensesForm component
+import Empleados from '../EMPLEADOS/Empleados'; // Import Empleados component
 
 const Homepage = () => {
   const [inventoryModalVisible, setInventoryModalVisible] = useState(false);
@@ -25,6 +26,7 @@ const Homepage = () => {
   const [pedidoMeseroModalVisible, setPedidoMeseroModalVisible] = useState(false); // Add state for PedidoMesero modal visibility
   const [expensesModalVisible, setExpensesModalVisible] = useState(false); // State for expenses modal
   const [userEmail, setUserEmail] = useState('');
+  const [empleadosModalVisible, setEmpleadosModalVisible] = useState(false); // Add state for Empleados modal visibility
 
   const determineDateAndShift = () => {
     const now = new Date();
@@ -67,6 +69,7 @@ const Homepage = () => {
     const turnoButton = document.getElementById('turno-button'); // Get Turno button element
     const mesasButton = document.getElementById('mesas-button'); // Get Mesas button element
     const expensesButton = document.getElementById('expenses-button'); // Get Expenses button element
+    const empleadosButton = document.getElementById('empleados-button'); // Get Empleados button element
     const auth = getAuth(app);
 
     const handleLogout = () => {
@@ -104,6 +107,10 @@ const Homepage = () => {
     const handleTurnoClick = () => {
       setTurnoModalVisible(true);
     };
+
+    const handleEmpleadosClick = () => {
+      setEmpleadosModalVisible(true);
+    };
     
 
     logoutButton.addEventListener('click', handleLogout);
@@ -116,6 +123,7 @@ const Homepage = () => {
     turnoButton.addEventListener('click', handleTurnoClick);
     mesasButton.addEventListener('click', handlePedidoMeseroClick);
     expensesButton.addEventListener('click', handleExpensesClick);
+    empleadosButton.addEventListener('click', handleEmpleadosClick);
 
     // Get the authenticated user's email
     const user = auth.currentUser;
@@ -135,6 +143,7 @@ const Homepage = () => {
       turnoButton.removeEventListener('click', handleTurnoClick);
       mesasButton.removeEventListener('click', handlePedidoMeseroClick);
       expensesButton.removeEventListener('click', handleExpensesClick);
+      empleadosButton.removeEventListener('click', handleEmpleadosClick);
     };
   }, []);
 
@@ -180,6 +189,7 @@ const Homepage = () => {
   const closeTurnoModal = () => setTurnoModalVisible(false);
   const closePedidoMeseroModal = () => setPedidoMeseroModalVisible(false);
   const closeExpensesModal = () => setExpensesModalVisible(false);
+  const closeEmpleadosModal = () => setEmpleadosModalVisible(false); // Close Empleados modal
 
   return (
     <div className="dashboard">
@@ -198,6 +208,7 @@ const Homepage = () => {
       {turnoModalVisible && <Turno modalVisible={turnoModalVisible} closeModal={closeTurnoModal} />}
       {pedidoMeseroModalVisible && <PedidoMesero modalVisible={pedidoMeseroModalVisible} closeModal={closePedidoMeseroModal} />}
       {expensesModalVisible && <ExpensesForm modalVisible={expensesModalVisible} closeModal={closeExpensesModal} />}
+      {empleadosModalVisible && <Empleados modalVisible={empleadosModalVisible} closeModal={closeEmpleadosModal} />}
       <div className="buttons-container">
         <button id="inventory-button" className="classname-inventory-button">
           <FaBoxOpen />
@@ -205,13 +216,17 @@ const Homepage = () => {
         </button>
         <button id="clients-button" className="classname-clients-button">
           <FaUsers />
+          <span>Clientes</span>
+        </button>
+        <button id="empleados-button" className="classname-empleados-button">
+          <FaUsers />
           <span>Empleados</span>
         </button>
         <button id="barrios-button" className="classname-barrios-button">
           <FaMapMarkerAlt />
           <span>Barrios</span>
         </button>
-        <button id="proveedores-button" className="classname-proveedores-button">
+        <button id="proveedores-button" className="classname-proveedores-button hidden">
           <FaTruck />
           <span>Proveedores</span>
         </button>

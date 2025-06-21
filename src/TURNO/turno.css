@@ -81,3 +81,7 @@
 .turno-table tbody tr:nth-child(even) {
   background-color: var(--input-background);
 }
+
+.hidden {
+  display: none !important;
+}

@@ -387,8 +387,8 @@ const Productos = ({ modalVisible, closeModal }) => {
                     value={producto.status}
                     onChange={handleInputChange}
                   >
-                    <option value="ENABLE">ENABLE</option>
-                    <option value="DISABLE">DISABLE</option>
+                    <option value="ENABLE">DISPONIBLE</option>
+                    <option value="DISABLE">NO DISPONIBLE</option>
                   </select>
                 </div>
                 <div className="productos-form-group">

@@ -4,6 +4,7 @@ import './turno.css';
 import { toast, ToastContainer } from 'react-toastify'; // Import ToastContainer
 import jsPDF from 'jspdf'; // Assuming you have jspdf installed
 import autoTable from 'jspdf-autotable'; // Ensure autoTable is imported correctly
+import Carga from '../Loada/Carga'; // Importa el componente de carga
 
 const Turno = ({ modalVisible, closeModal }) => {
   const [turnType, setTurnType] = useState('');
@@ -331,6 +332,7 @@ const generatePDF = async () => {
   const pdfDoc = new jsPDF();
   // Usar la fecha seleccionada para los datos y el nombre del archivo
   const orderData = await fetchOrderData(turnTime, selectedDate);
+  const deletedOrders = await fetchDeletedOrders(turnTime, selectedDate); // <-- NUEVO
   const pageWidth = pdfDoc.internal.pageSize.getWidth();
 
   // Título principal
@@ -397,6 +399,25 @@ const generatePDF = async () => {
     theme: 'striped',
     styles: { fontSize: 12, cellPadding: 3 },
     headStyles: { fillColor: [231, 76, 60], textColor: 255, fontStyle: 'bold' },
+    pageBreak: 'auto'
+  });
+
+  // NUEVO: Tabla de Pedidos Borrados
+  let deletedY = pdfDoc.lastAutoTable.finalY + 10;
+  pdfDoc.setFontSize(16);
+  pdfDoc.text('Pedidos Borrados', 14, deletedY);
+  autoTable(pdfDoc, {
+    startY: deletedY + 5,
+    head: [['ID', 'Hora', 'Motivo']],
+    body: deletedOrders.length > 0 ? deletedOrders.map((del) => [
+      del.id ? del.id.split('_')[0] : '',
+      del.timestamp ? `${del.timestamp.getHours().toString().padStart(2, '0')}:${del.timestamp.getMinutes().toString().padStart(2, '0')}` : '',
+      del.motivo
+    ]) : [['', '', 'No hay pedidos borrados']],
+    theme: 'striped',
+    styles: { fontSize: 12, cellPadding: 3 },
+    headStyles: { fillColor: [155, 89, 182], textColor: 255, fontStyle: 'bold' },
+    pageBreak: 'auto'
   });
 
   const balancesY = pdfDoc.lastAutoTable.finalY + 10;
@@ -515,6 +536,34 @@ const fetchExpenses = async (turnTime, customDate) => {
   }
 };
 
+// Función para obtener pedidos borrados del día
+const fetchDeletedOrders = async (turnTime, customDate) => {
+  const db = getFirestore();
+  let date;
+  if (customDate) {
+    const [yyyy, mm, dd] = customDate.split('-');
+    date = `${parseInt(dd)}-${parseInt(mm)}-${yyyy}`;
+  } else {
+    const now = new Date();
+    date = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+  }
+  const deletedDocRef = doc(db, 'BORRADOS', date);
+  try {
+    const deletedDocSnap = await getDoc(deletedDocRef);
+    if (deletedDocSnap.exists()) {
+      const data = deletedDocSnap.data();
+      return Object.values(data).map(entry => ({
+        motivo: entry.motivo,
+        timestamp: entry.timestamp && entry.timestamp.toDate ? entry.timestamp.toDate() : new Date(entry.timestamp),
+        id: entry.ID || '',
+      }));
+    }
+    return [];
+  } catch (e) {
+    return [];
+  }
+};
+
 useEffect(() => {
   if (modalVisible && turnTime && turnType === 'FIN') {
     fetchExpenses(turnTime, selectedDate);
@@ -576,11 +625,290 @@ Al finalizar el turno, el total recibido en Nequi ascendió a ${formatPrice(fina
   newWindow.document.close();
 };
 
+// NUEVO: Función para obtener todas las fechas del mes y año seleccionados
+const getAllDatesOfMonth = (year, month) => {
+  const dates = [];
+  const daysInMonth = new Date(year, month, 0).getDate();
+  for (let day = 1; day <= daysInMonth; day++) {
+    dates.push(`${day}-${month}-${year}`);
+  }
+  return dates;
+};
+
+// NUEVO: Función para generar el reporte mensual
+const generateMonthlyReport = async () => {
+  if (!turnType || !turnTime || !selectedDate) {
+    alert('Debe seleccionar el tipo de turno, el turno y la fecha para generar el reporte mensual');
+    return;
+  }
+  setIsProcessing(true);
+
+  // Obtener mes y año del calendario
+  const [yyyy, mm] = selectedDate.split('-');
+  const year = parseInt(yyyy);
+  const month = parseInt(mm);
+
+  const datesOfMonth = getAllDatesOfMonth(year, month);
+
+  // Acumuladores
+  let totalOrders = 0;
+  let domicilioOrders = 0;
+  let mesaOrders = 0;
+  let llevarOrders = 0;
+  let productCounts = {};
+  let totalNequi = 0;
+  let totalEfectivo = 0;
+  let totalExpenses = 0;
+  let expensesList = [];
+  let deliverySummary = {}; // { personId: { name, nequi, efectivo } }
+
+  const db = getFirestore();
+
+  for (const date of datesOfMonth) {
+    // Pedidos
+    const pedidosDocRef = doc(db, 'PEDIDOS', date);
+    const pedidosDocSnap = await getDoc(pedidosDocRef);
+    if (pedidosDocSnap.exists()) {
+      const pedidosData = pedidosDocSnap.data();
+      if (pedidosData[turnTime]) {
+        totalOrders += Object.keys(pedidosData[turnTime]).length;
+        Object.values(pedidosData[turnTime]).forEach(order => {
+          if (order.tableNumber === 'LLEVAR') {
+            llevarOrders++;
+          } else if (order.tableNumber) {
+            mesaOrders++;
+          } else {
+            domicilioOrders++;
+          }
+          order.cart.forEach(product => {
+            const productId = product.id;
+            const productName = product.name.replace(/[^\w\s]/gi, '');
+            if (productCounts[productId]) {
+              productCounts[productId].count++;
+            } else {
+              productCounts[productId] = { name: productName, count: 1 };
+            }
+          });
+        });
+      }
+    }
+
+    // DOMICILIOS (balances)
+    const domiciliosDocRef = doc(db, 'DOMICILIOS', date);
+    const domiciliosDocSnap = await getDoc(domiciliosDocRef);
+    if (domiciliosDocSnap.exists()) {
+      const domiciliosData = domiciliosDocSnap.data();
+      Object.keys(domiciliosData).forEach(personId => {
+        if (domiciliosData[personId][turnTime] && domiciliosData[personId][turnTime].balance) {
+          const nequi = parseFloat(domiciliosData[personId][turnTime].balance.NEQUI || 0);
+          const efectivo = parseFloat(domiciliosData[personId][turnTime].balance.EFECTIVO || 0);
+          totalNequi += nequi;
+          totalEfectivo += efectivo;
+          // Acumular por domiciliario/mesero
+          if (!deliverySummary[personId]) {
+            deliverySummary[personId] = {
+              name: deliveryPersons.find(p => p.id === personId)?.name || 'Desconocido',
+              nequi: 0,
+              efectivo: 0
+            };
+          }
+          deliverySummary[personId].nequi += nequi;
+          deliverySummary[personId].efectivo += efectivo;
+        }
+      });
+    }
+
+    // EGRESOS
+    const egresosDocRef = doc(db, 'EGRESOS', date);
+    const egresosDocSnap = await getDoc(egresosDocRef);
+    if (egresosDocSnap.exists()) {
+      const data = egresosDocSnap.data();
+      const turnExpenses = Object.entries(data[turnTime] || {}).map(([id, expense]) => ({
+        id: `${date}-${id}`,
+        ...expense,
+      }));
+      expensesList = expensesList.concat(turnExpenses);
+      totalExpenses += turnExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+    }
+  }
+
+  // Generar PDF
+  const pdfDoc = new jsPDF();
+  const pageWidth = pdfDoc.internal.pageSize.getWidth();
+
+  pdfDoc.setFontSize(18);
+  pdfDoc.text(
+    `Reporte Mensual - Turno ${turnTime === 'MORNING' ? 'Mañana' : 'Noche'}\n${mm.padStart(2, '0')}/${year}`,
+    pageWidth / 2,
+    20,
+    { align: 'center' }
+  );
+
+  pdfDoc.setFontSize(14);
+  pdfDoc.text(`Tipo de Turno: ${turnType}`, pageWidth / 2, 28, { align: 'center' });
+
+  // Tabla de Pedidos
+  pdfDoc.setFontSize(16);
+  pdfDoc.text('Resumen de Pedidos', 14, 40);
+
+  autoTable(pdfDoc, {
+    startY: 45,
+    head: [['Descripción', 'Cantidad']],
+    body: [
+      ['Pedidos a domicilio', domicilioOrders],
+      ['Pedidos en mesa', mesaOrders],
+      ['Pedidos para llevar', llevarOrders],
+      ['Total de pedidos', totalOrders],
+    ],
+    theme: 'striped',
+    styles: { fontSize: 12, cellPadding: 3 },
+    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+  });
+
+  const previousY = pdfDoc.lastAutoTable.finalY + 10;
+
+  // Tabla de Productos Vendidos
+  pdfDoc.setFontSize(16);
+  pdfDoc.text('Productos Vendidos', 14, previousY);
+
+  autoTable(pdfDoc, {
+    startY: previousY + 5,
+    head: [['Producto', 'Cantidad']],
+    body: Object.values(productCounts).map(({ name, count }) => [name, count]),
+    theme: 'striped',
+    styles: { fontSize: 12, cellPadding: 3 },
+    headStyles: { fillColor: [46, 204, 113], textColor: 255, fontStyle: 'bold' },
+  });
+
+  const expensesY = pdfDoc.lastAutoTable.finalY + 10;
+
+  // Tabla de Egresos
+  pdfDoc.setFontSize(16);
+  pdfDoc.text('Egresos del Turno', 14, expensesY);
+
+  autoTable(pdfDoc, {
+    startY: expensesY + 5,
+    head: [['Concepto', 'Monto']],
+    body: expensesList.map((expense) => [expense.concept, formatPrice(expense.amount)]),
+    theme: 'striped',
+    styles: { fontSize: 12, cellPadding: 3 },
+    headStyles: { fillColor: [231, 76, 60], textColor: 255, fontStyle: 'bold' },
+    pageBreak: 'auto' // Permite salto de página automático si no caben los egresos
+  });
+
+  const balancesY = pdfDoc.lastAutoTable.finalY + 10;
+
+  // Tabla de Totales
+  pdfDoc.setFontSize(16);
+  pdfDoc.text('Totales del Mes', 14, balancesY);
+
+  autoTable(pdfDoc, {
+    startY: balancesY + 5,
+    head: [['Total Nequi', 'Total Efectivo', 'Total Egresos']],
+    body: [[formatPrice(totalNequi), formatPrice(totalEfectivo), formatPrice(totalExpenses)]],
+    theme: 'striped',
+    styles: { fontSize: 12, cellPadding: 3 },
+    headStyles: { fillColor: [52, 152, 219], textColor: 255, fontStyle: 'bold' },
+  });
+
+  // NUEVO: Página resumen mensual tipo texto
+  pdfDoc.addPage();
+
+  // Resumen de domiciliarios/meseros
+  const deliveryDetails = Object.values(deliverySummary).map(person => {
+    const name = capitalizeName(person.name);
+    const nequi = formatPrice(person.nequi);
+    const efectivo = formatPrice(person.efectivo);
+    return efectivo !== '$0'
+      ? `• ${name} entregó un total de ${nequi} en Nequi y ${efectivo} en efectivo.`
+      : `• ${name} entregó un total de ${nequi} en Nequi.`;
+  });
+
+  const expenseDetails = expensesList.length > 0
+    ? expensesList.map(expense =>
+        `• ${capitalizeName(expense.concept)} por un monto de ${formatPrice(expense.amount)}.`)
+    : ['En el mes no hubieron egresos'];
+
+  pdfDoc.setFontSize(18);
+  pdfDoc.text(
+    `Resumen Mensual - Turno ${turnTime === 'MORNING' ? 'Mañana' : 'Noche'}\n${mm.padStart(2, '0')}/${year}`,
+    pageWidth / 2,
+    20,
+    { align: 'center' }
+  );
+
+  pdfDoc.setFontSize(12);
+
+  // --- NUEVO: Imprimir el resumen con salto de página si es necesario ---
+  let y = 35;
+  const lineHeight = 7;
+  const margin = 14;
+  const maxY = pdfDoc.internal.pageSize.getHeight() - margin;
+
+  const addTextWithPageBreak = (lines) => {
+    for (const line of lines) {
+      if (y > maxY) {
+        pdfDoc.addPage();
+        y = margin;
+      }
+      pdfDoc.text(line, margin, y, { maxWidth: pageWidth - margin * 2 });
+      y += lineHeight;
+    }
+    y += lineHeight; // Espacio extra entre secciones
+  };
+
+  addTextWithPageBreak([
+    `Durante el mes, se recibieron ingresos a través de los domiciliarios/meseros:`,
+    ''
+  ]);
+  addTextWithPageBreak(deliveryDetails);
+
+  addTextWithPageBreak([
+    '',
+    `El total recibido en efectivo fue de ${formatPrice(totalEfectivo)}`,
+    `El total recibido en Nequi fue de ${formatPrice(totalNequi)}`,
+    '',
+    `En cuanto a egresos, se registraron los siguientes pagos:`,
+    ''
+  ]);
+  addTextWithPageBreak(expenseDetails);
+
+  addTextWithPageBreak([
+    '',
+    `Al finalizar el mes, el total recibido en Nequi ascendió a ${formatPrice(totalNequi)}, mientras que en efectivo se acumuló un total de ${formatPrice(totalEfectivo)}, sumando un ingreso total de ${formatPrice(totalNequi + totalEfectivo)}.`
+  ]);
+  // --- FIN NUEVO ---
+
+  // Guardar PDF
+  const pdfName = `REPORTE_MENSUAL_${turnTime}_${mm.padStart(2, '0')}_${year}.pdf`;
+  pdfDoc.save(pdfName);
+
+  setIsProcessing(false);
+};
+
+  // Al inicio del return principal, muestra la pantalla de carga si isProcessing es true
   if (!modalVisible) return null;
 
   return (
     <>
       <ToastContainer autoClose={3000} />
+      {/* Pantalla de carga superpuesta si isProcessing */}
+      {isProcessing && (
+        <div style={{
+          position: 'fixed',
+          zIndex: 9999,
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <Carga />
+        </div>
+      )}
       {modalVisible && (
         <div className="turno-modal" onClick={closeModal}>
           <div className="turno-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -825,11 +1153,21 @@ Al finalizar el turno, el total recibido en Nequi ascendió a ${formatPrice(fina
                       )}
                     </tbody>
                   </table>
+                  {/* NUEVO: Botón de reporte mensual */}
+                  <button
+                    type="button"
+                    style={{ marginBottom: '10px', color: 'black' }}
+                    onClick={generateMonthlyReport}
+                    disabled={isProcessing}
+                    className={turnType !== 'FIN' ? 'hidden' : ''}
+                  >
+                    {isProcessing ? 'Procesando...' : 'Reporte Mensual'}
+                  </button>
                   <button onClick={handleSubmit} disabled={isProcessing}>
                     {isProcessing ? 'Procesando...' : 'Guardar'}
                   </button>
                   <button onClick={generatePDF} disabled={isProcessing}>
-                    {isProcessing ? 'Procesando...' : 'Imprimir'}
+                    {isProcessing ? 'Procesando...' : 'Imprimir informe Diario'}
                   </button>
                 </>
               )}
