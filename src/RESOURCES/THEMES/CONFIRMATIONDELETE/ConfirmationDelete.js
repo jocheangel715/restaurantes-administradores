@@ -6,7 +6,8 @@ const ConfirmationDelete = ({ title, message, onConfirm, onCancel }) => {
     <>
       <div className="confirmation-overlay"></div>
       <div className="confirmation-modal">
-        <h2>{title}</h2>
+        <h2 style={{ color: 'white' }}>{title}</h2>
+
         <p>{message}</p>
         <button className="confirmation-button" onClick={onCancel}>No deseo borrarlo</button>
         <button className="confirmation-button" onClick={onConfirm}>Sí, deseo borrarlo</button>
