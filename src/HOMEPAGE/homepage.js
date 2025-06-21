@@ -210,7 +210,7 @@ const Homepage = () => {
       {expensesModalVisible && <ExpensesForm modalVisible={expensesModalVisible} closeModal={closeExpensesModal} />}
       {empleadosModalVisible && <Empleados modalVisible={empleadosModalVisible} closeModal={closeEmpleadosModal} />}
       <div className="buttons-container">
-        <button id="inventory-button" className="classname-inventory-button">
+        <button id="inventory-button" className="classname-inventory-button hidden">
           <FaBoxOpen />
           <span>Inventario</span>
         </button>
